@@ -104,7 +104,7 @@ for (var status in statusCodes) {
             exports.HttpError.call(this, msg || status + ": " + defaultMsg, status);
 
             if (status >= 500)
-                Error.captureStackTrace(this, arguments.callee);
+                Error.captureStackTrace(this, this.constructor);
         };
     })(defaultMsg, status);
 
@@ -117,7 +117,7 @@ for (var status in statusCodes) {
 
 function toCamelCase(str) {
     return str.toLowerCase().replace(/(?:(^.)|(\s+.))/g, function(match) {
-        return match.charAt(match.length-1).toUpperCase();
+        return match.charAt(match.length - 1).toUpperCase();
     });
 }
 

@@ -183,7 +183,7 @@ function plugin(options, imports, register) {
             type: "string"
         }
     }, [
-        requestTimeout(15*60*1000),
+        requestTimeout(15 * 60 * 1000),
         connect.getModule().compress(),
         function(req, res, next) {
             req.query = {
@@ -192,7 +192,7 @@ function plugin(options, imports, register) {
             passport.authenticate("bearer", { session: false }, function(err, user) {
                 if (err) return next(err);
                 
-                req.user = user || { id: -1};
+                req.user = user || { id: -1 };
                 next();
             })(req, res, next);
         },
@@ -218,13 +218,13 @@ function plugin(options, imports, register) {
             type: "string"
         }
     }, [
-        requestTimeout(15*60*1000),
+        requestTimeout(15 * 60 * 1000),
         connect.getModule().compress(),
         function(req, res, next) {
             passport.authenticate("bearer", { session: false }, function(err, user) {
                 if (err) return next(err);
                 
-                req.user = user || { id: -1};
+                req.user = user || { id: -1 };
                 next();
             })(req, res, next);
         },
@@ -277,7 +277,7 @@ function plugin(options, imports, register) {
             var vfsid = req.params.vfsid;
             var scope = req.params.scope;
             var path = req.params.path;
-    
+            
             var entry = cache.get(vfsid);
             if (!entry) {
                 var err = new error.PreconditionFailed("VFS connection does not exist");
@@ -305,7 +305,7 @@ function plugin(options, imports, register) {
             }
         }
     }, [
-        requestTimeout(15*60*1000),
+        requestTimeout(15 * 60 * 1000),
         function handleEngine(req, res, next) {
             var vfsid = req.params.vfsid;
             
@@ -335,10 +335,46 @@ function plugin(options, imports, register) {
             user.save && user.save(function() {});
         }
     }
-
+    
+    function handlePublish(vfs, messageString) {
+        var message = JSON.parse(messageString);
+        switch (message.action) {
+            case "remove_member": 
+            case "update_member_access":
+                handleProjectMemberAccessChange(vfs, message);
+                break;
+            case "project_changed":
+                handleProjectVisibilityChanged(vfs, message);
+            default:
+                break;
+        }
+    }
+    
+    function handleProjectMemberAccessChange(vfs, message) {
+        if (vfs.uid !== message.body.uid) return;
+        
+        console.log("Removing ", vfs.id, " for user ", vfs.uid, " project ", vfs.pid, " from the vfs connection cache");
+        
+        // Remove next tick so client has time to recieve final "You've been removed" PubSub message.
+        setTimeout(function() {
+            cache.remove(vfs.id); 
+        }, 100);
+    }
+    
+    function handleProjectVisibilityChanged(vfs, message) {
+        if (vfs.uid == message.body.owner) return;
+        
+        if ((message.body.visibility && message.body.visibility == "private") ||  
+            (message.body.appAccess && message.body.appAccess == "private")) {
+            console.log("Project ", vfs.pid, " recieved message: ", message.body, ". Killing connection of user ", vfs.uid);
+            cache.remove(vfs.id);
+        }
+    }
+    
     register(null, {
         "vfs.server": {
-            get section() { return section; }
+            get section() { return section; },
+            get handlePublish() { return handlePublish; }
         }
     });
 }

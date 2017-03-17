@@ -81,12 +81,12 @@ function init(id) {
         scripts: scripts //@todo
     };
     
-    setTimeout(function(){
+    setTimeout(function() {
         send({
             message: "html.ready",
             data: {
-                styles: session.styles.map(function(n){ return n.path }),
-                scripts: session.scripts.map(function(n){ return n.path }),
+                styles: session.styles.map(function(n) { return n.path; }),
+                scripts: session.scripts.map(function(n) { return n.path; }),
                 href: document.location.pathname.replace(/^\/preview\//, "/")
             }
         });
@@ -117,8 +117,8 @@ function urlToPath(url, base) {
     return url;
 }
 
-function getDataUrl(data){ return "data:text/css," + data.replace(/\n/g, ""); }
-function dirname(path){ return path.substr(0, path.lastIndexOf("/")); }
+function getDataUrl(data) { return "data:text/css," + data.replace(/\n/g, ""); }
+function dirname(path) { return path.substr(0, path.lastIndexOf("/")); }
 function join(base, path) {
     if (path.charAt(0) != "/") {
         var parts = path.split("/");
@@ -140,7 +140,7 @@ function join(base, path) {
 /*global CSSRule*/
 function Reloader(win, console) {
     
-    function getAllStylesheets(){
+    function getAllStylesheets() {
         var results = [];
         var nodes, node, i, path;
         
@@ -175,7 +175,7 @@ function Reloader(win, console) {
         return results;
     }
     
-    function getAllScripts(){
+    function getAllScripts() {
         var results = [];
         var nodes, node, i, path;
         
@@ -386,6 +386,7 @@ function Reloader(win, console) {
 // Keys
 var ckb;
 function setKeys(list) {
+    if (window.opener) return; // do not forward keys when not in iframe
     ckb = {};
     
     list.forEach(function(item) {
@@ -420,7 +421,7 @@ document.addEventListener("keydown", function(e) {
     }
 });
 
-window.addEventListener("focus", function(){
+window.addEventListener("focus", function() {
     send({ message: "focus" });
     removeHighlight();
 });
@@ -430,7 +431,7 @@ window.addEventListener("focus", function(){
 var HIGHLIGHT_CLASSNAME = "c9___highlighter";
 
 var last = [], lastHighlight;
-function removeHighlight(){
+function removeHighlight() {
     last.forEach(function(item) {
         item.destroy();
     });
@@ -480,7 +481,7 @@ function Highlight(div, text, setDisplayName) {
             + (div.className ? "<c9__span style='color:rgb(72, 128, 12)'>." + div.className.replace(/ /g, "") + "</c9__span>" : "");
     }
     
-    this.resize = function(){
+    this.resize = function() {
         var pos = div.getBoundingClientRect();
         cover.style.left = (pos.left - 1) + "px";
         cover.style.top = (pos.top - 1) + "px";
@@ -493,7 +494,7 @@ function Highlight(div, text, setDisplayName) {
             + pos.height + "<c9__span style='color:gray'>px</c9__span>";
     };
     
-    this.destroy = function(){
+    this.destroy = function() {
         if (cover.parentNode)
             cover.parentNode.removeChild(cover);
     };
@@ -520,13 +521,13 @@ function highlightByCssQuery(query) {
     lastHighlight = { fn: highlightByCssQuery, query: query };
 }
 
-function redrawHighlights(){
+function redrawHighlights() {
     if (lastHighlight) {
         lastHighlight.fn(lastHighlight.query);
     }
 }
 
-function resize(){
+function resize() {
     last.forEach(function(item) {
         item.resize();
     });
@@ -537,7 +538,7 @@ function resize(){
 }
 
 var timer, sizeDiv;
-function showSize(){
+function showSize() {
     if (!sizeDiv) {
         sizeDiv = document.createElement("div");
         sizeDiv.style.position = "absolute";
@@ -555,7 +556,7 @@ function showSize(){
     document.documentElement.appendChild(sizeDiv);
     sizeDiv.innerHTML = window.innerWidth + "px \u00D7 " + window.innerHeight + "px";
 }
-function hideSize(){
+function hideSize() {
     if (sizeDiv.parentNode)
         document.documentElement.removeChild(sizeDiv);
 }
@@ -682,7 +683,7 @@ DOMEditHandler.prototype._textReplace = function (targetElement, edit) {
     if (targetElement.tagName === "TEXTAREA")
         return targetElement.value = this._parseEntities(edit.content, true);
     
-    var start = (edit.afterID)  ? this._queryBracketsID(edit.afterID)  : null,
+    var start = (edit.afterID) ? this._queryBracketsID(edit.afterID) : null,
         startMissing = edit.afterID && !start,
         end = (edit.beforeID) ? this._queryBracketsID(edit.beforeID) : null,
         endMissing = edit.beforeID && !end,
@@ -891,7 +892,7 @@ DOMEditHandler.prototype.initDom = function (docState) {
         };
         
         if (dom.tag == "html") {
-            for (var ch = dom.children, i = ch.length; i--; ) {
+            for (var ch = dom.children, i = ch.length; i--;) {
                 if (ch[i].tag == "head" || ch[i].tag == "body")
                     flatten(dom, i);
             }
@@ -908,7 +909,7 @@ DOMEditHandler.prototype.initDom = function (docState) {
  * @param {Element} elem
  */
 function _domElementToJSON(elem) {
-    var json = { tag: elem.tagName.toLowerCase(), attributes: {}, children: [] },
+    var json = { tag: elem.tagName.toLowerCase(), attributes: {}, children: []},
         i,
         len,
         node,
@@ -992,7 +993,7 @@ function setStyleRule(name, type, value, stylesheet, win) {
         if (value.indexOf("!important") > -1) {
             rule.style.cssText = type + ":" + value;
         } else {
-            type = type.replace(/-(\w)/g, function(_, a) {return a.toUpperCase()});
+            type = type.replace(/-(\w)/g, function(_, a) {return a.toUpperCase();});
             rule.style[type] = value;
         }
     }
@@ -1015,10 +1016,12 @@ function send(message) {
         host == "local" ? "*" : host);
 }
 
-window.start = function(win) {
-    parent = win;
-    init(id);
-};
+window.addEventListener("message", function(e) {
+    if (e.data == "start-c9-livecss") {
+        parent = e.source;
+        init(id);
+    }
+});
 
 // Make sure everything is loaded
 if (parent != window)

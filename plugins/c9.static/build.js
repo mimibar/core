@@ -55,27 +55,29 @@ function main(options, imports, register) {
             ["default-local", "ssh", "default"].forEach(function(n) {
                 plugins.push.apply(plugins, readConfig(n).config);
             });
-            return {config: plugins};
+            return { config: plugins };
         }
-        
-        if (config[0] != "/")
-            config = path.join(__dirname, "/../../configs/client-" + config);
-            
-        if (config.slice(-3) !== ".js")
-            config += ".js";
-            
-        var settings;
-        try {
-            settings = require("../../settings/standalone");
-            config = require(config);
-        } catch (e) {
-            if (e.code == "MODULE_NOT_FOUND")
-                e = new error.NotFound();
-            return {error: e};
+        var err;
+        function tryPath(filePath, prefix) {
+            if (filePath.slice(-3) !== ".js")
+                filePath += ".js";
+            if (filePath[0] !== "/")
+                filePath = path.join(__dirname, "/../../", prefix + filePath);
+            try {
+                return require(filePath);
+            } catch (e) {
+                if (e.code == "MODULE_NOT_FOUND")
+                    e = new error.NotFound("Settings");
+                err = e;
+            }
         }
+        var settings = tryPath("settings/standalone", "");
+        config = tryPath(config, "configs/ide/") || tryPath(config, "configs/client-");
+        if (!config || !settings && err)
+            return { error: err };
         settings = settings();
         settings.packaging = true;
-        return {config: config(settings)};
+        return { config: config(settings) };
     }
     
     function buildConfig(config, pathConfig, callback, onReadConfig) {
@@ -234,7 +236,7 @@ function main(options, imports, register) {
     
     function buildWorker(module, pathConfig, callback) {
         var modules = [module];
-        if (module == "plugins/c9.ide.language/worker") {
+        if (module == "plugins/c9.ide.language.core/worker") {
             // jsonalyzer is missing in built version of local
             var jsonalyzer = require("../c9.ide.language.jsonalyzer/default_plugins");
             var extraPackages = [
@@ -248,17 +250,16 @@ function main(options, imports, register) {
                 extraPackages = extraPackages
                     .concat(require("lib/salesforce.language/__worker__"))
                     .concat(require("lib/salesforce.sync/__worker__"));
-            } catch(e) {}
+            } catch (e) {}
             // TODO find a saner method for managing files loaded in language worker
             modules = [
-                "plugins/c9.ide.language/worker",
+                "plugins/c9.ide.language.core/worker",
                 "plugins/c9.ide.language.generic/local_completer",
                 "plugins/c9.ide.language.generic/snippet_completer",
                 "plugins/c9.ide.language.generic/mode_completer",
                 "plugins/c9.ide.language.generic/open_files_local_completer",
                 "plugins/c9.ide.language.generic/simple/make",
                 "plugins/c9.ide.language.generic/simple/shell",
-                "plugins/c9.ide.language.generic/simple/php",
                 "plugins/c9.ide.language.javascript/parse",
                 "plugins/c9.ide.language.javascript/scope_analyzer",
                 "plugins/c9.ide.language.javascript/debugger",
@@ -273,6 +274,10 @@ function main(options, imports, register) {
                 "plugins/c9.ide.language.python/worker/python_completer",
                 "plugins/c9.ide.language.python/worker/python_jsonalyzer",
                 "plugins/c9.ide.language.go/worker/go_completer",
+                "plugins/c9.ide.language.codeintel/worker/php_completer",
+                "plugins/c9.ide.language.codeintel/worker/css_less_completer",
+                "plugins/c9.ide.language.codeintel/worker/ruby_completer",
+                "plugins/c9.ide.language.codeintel/worker/codeintel_worker",
                 "plugins/c9.ide.language.html/html_completer",
                 "plugins/c9.ide.language.css/css_handler",
                 "plugins/c9.ide.language.javascript.tern/worker/tern_worker",
@@ -416,6 +421,6 @@ function main(options, imports, register) {
         if (err) return register(err);
         
         console.log("CDN: version " + options.version + " initialized", cacheDir);
-        register(null, { "cdn.build" : plugin });
+        register(null, { "cdn.build": plugin });
     });
 }

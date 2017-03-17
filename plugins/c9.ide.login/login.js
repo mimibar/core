@@ -36,10 +36,19 @@ define(function(require, exports, module) {
             loaded = true;
 
             info.getUser(function(err, user) {
-                updateButton({user: user});
+                updateButton({ user: user });
             });
 
             auth.on("relogin", onReLogin);
+
+            if (!c9.local) {
+                menus.addItemByPath("Cloud9/~", new apf.divider(), 2000000, plugin);
+                menus.addItemByPath("Cloud9/Quit Cloud9", new apf.item({
+                    onclick: function() {
+                        signout();
+                    }
+                }), 2000100, plugin);
+            }
         }
 
         /***** Methods *****/
@@ -81,7 +90,7 @@ define(function(require, exports, module) {
             // Add Divider
             ui.insertByIndex(parent, new ui.divider({ 
                 skin: "c9-divider-double", 
-                "class" : "extrasdivider" 
+                "class": "extrasdivider" 
             }), 870, plugin);
             
             // Add sub menu items
@@ -118,11 +127,11 @@ define(function(require, exports, module) {
             ui.insertByIndex(parent, button, 600, plugin);
 
             if (c9.local) {
-                function minimize(){
+                function minimize() {
                     apf.document.documentElement.appendChild(button);
                     ui.setStyleClass(button.$ext, "titlebar");
                 }
-                function restore(){
+                function restore() {
                     ui.insertByIndex(parent, button, 870, plugin);
                     ui.setStyleClass(button.$ext, "", ["titlebar"]);
                 }
@@ -173,7 +182,7 @@ define(function(require, exports, module) {
          *
          **/
         plugin.freezePublicAPI({
-            get menu(){ return mnuUser; },
+            get menu() { return mnuUser; },
             
             _events: [
                 /**

@@ -18,7 +18,7 @@ define(function(require, exports, module) {
         this.updateData();
         
         Object.defineProperty(this, "loaded", {
-            get: function(){ return this.visibleItems.length; }
+            get: function() { return this.visibleItems.length; }
         });
     };
     oop.inherits(ListData, Base);
@@ -61,7 +61,7 @@ define(function(require, exports, module) {
             this._signal("change");
         };
         
-        this.getEmptyMessage = function(){
+        this.getEmptyMessage = function() {
             if (!this.keyword)
                 return "Loading command list. One moment please...";
             else
@@ -76,7 +76,7 @@ define(function(require, exports, module) {
             var i;
             if ((i = value.lastIndexOf(keyword)) !== -1)
                 return value.substring(0, i) + "<strong>" + keyword + "</strong>" 
-                    + value.substring(i+keyword.length);
+                    + value.substring(i + keyword.length);
             
             var result = this.search.matchPath(value, keyword);
             if (!result.length)
@@ -106,22 +106,24 @@ define(function(require, exports, module) {
                 + (available && this.getClassName(row))
                 + (available ? "" : " notAvailable")
                 + "' style='height:" + this.innerRowHeight + "px'>"
-                + "<span class='keys'>" + keys + "</span>"
                 + "<span class='caption'>"
-                + this.replaceStrong((command.group || "General") + ": " + name)
-                + "</span><span class='path'>"
-                + (command.hint 
-                    ? this.replaceStrong(command.hint)
-                    : "")
+                + this.replaceStrong(name)
+                + "</span><span class='keys'>" + keys + "</span>"
+                + "<span class='path'>"
+                + ((command.group || "General"))
                 + "</span></div>");
         };
         
         this.getText = function(node) {
             var command = this.commands.commands[node.id];
             if (!command) return "";
+            
+            var keys = (command.bindKey || 0)[this.commands.platform] || "";
             return (command.group || "General") + ": "
                 + (command.displayName || command.name || node.id)
-                + (command.hint ? "\n" + command.hint : "");
+                + (command.hint ? "\n" + command.hint : "")
+                + (keys ? "\n" + keys : "")
+                + "\nPress F2 to change keybinding";
         };
         
         this.getClassName = function(row) {

@@ -89,6 +89,11 @@ function plugin(options, imports, register) {
                 source: "query",
                 optional: true
             }, 
+            config: {
+                type: "number",
+                source: "query",
+                optional: true
+            },
         }
     }, function(req, res, next) {
 
@@ -112,16 +117,19 @@ function plugin(options, imports, register) {
         
         opts.options.debug = req.params.debug !== undefined;
         res.setHeader("Cache-Control", "no-cache, no-store");
+        if (req.params.config == 1)
+            return res.json(getConfig(configName, opts));
         res.render(__dirname + "/views/standalone.html.ejs", {
             architectConfig: getConfig(configName, opts),
             configName: configName,
             packed: opts.packed,
+            standalone: true,
             version: opts.version
         }, next);
     });
     
     api.get("/_ping", function(params, callback) {
-        return callback(null, {"ping": "pong"}); 
+        return callback(null, { "ping": "pong" }); 
     });
     
     api.get("/preview/:path*", [
@@ -148,17 +156,17 @@ function plugin(options, imports, register) {
         if (!options.options.testing)
             return next();
             
-        res.writeHead(200, {"Content-Type": "application/javascript"});
-        res.end("define(function(require, exports, module) { return '" 
-            + options.workspaceDir + "'; });");
+        res.writeHead(200, { "Content-Type": "application/javascript" });
+        res.end("define(function(require, exports, module) { return " 
+            + JSON.stringify(options.workspaceDir.replace(/\\/g, "/")) + "; });");
     });
     api.get("/vfs-home", function(req, res, next) {
         if (!options.options.testing)
             return next();
             
-        res.writeHead(200, {"Content-Type": "application/javascript"});
-        res.end("define(function(require, exports, module) { return '" 
-            + process.env.HOME + "'; });");
+        res.writeHead(200, { "Content-Type": "application/javascript" });
+        res.end("define(function(require, exports, module) { return " 
+            + JSON.stringify(process.env.HOME.replace(/\\/g, "/")) + "; });");
     });
 
     api.get("/update", function(req, res, next) {
@@ -176,7 +184,7 @@ function plugin(options, imports, register) {
     
     api.get("/update/:path*", function(req, res, next) {
         var filename = req.params.path;
-        var path = resolve(__dirname + "/../../build/output/" + filename);
+        var path = resolve(__dirname + "/../../build/output/" + resolve("/" + filename));
         
         var stream = fs.createReadStream(path);
         stream.on("error", function(err) {
@@ -184,7 +192,7 @@ function plugin(options, imports, register) {
         });
         stream.on("data", function(data) {
             if (!res.headersSent)
-                res.writeHead(200, {"Content-Type": "application/octet-stream"});
+                res.writeHead(200, { "Content-Type": "application/octet-stream" });
                 
             res.write(data);
         });
@@ -196,7 +204,7 @@ function plugin(options, imports, register) {
     api.get("/configs/require_config.js", function(req, res, next) {
         var config = res.getOptions().requirejsConfig || {};
         
-        res.writeHead(200, {"Content-Type": "application/javascript"});
+        res.writeHead(200, { "Content-Type": "application/javascript" });
         res.end("requirejs.config(" + JSON.stringify(config) + ");");
     });
     
@@ -215,61 +223,11 @@ function plugin(options, imports, register) {
                 });
             }, function(files) {
                 result.list = files;
-                res.writeHead(200, {"Content-Type": "application/json"});
+                res.writeHead(200, { "Content-Type": "application/json" });
                 res.end(JSON.stringify(result, null, 2));
             });
         });
     });
-    
-    api.get("/api.json", {name: "api"}, frontdoor.middleware.describeApi(api));
-
-    api.get("/api/project/:pid/persistent/:apikey", {
-        params: {
-            pid: { type: "number" },
-            apikey: { type: "string" }
-        }
-    }, persistentDataApiMock);
-    api.put("/api/project/:pid/persistent/:apikey", {
-        params: {
-            data: { type: "string", source: "body" },
-            pid: { type: "number" },
-            apikey: { type: "string" },
-        }
-    }, persistentDataApiMock);
-    api.get("/api/user/persistent/:apikey", {
-        params: {
-            apikey: { type: "string" }
-        }
-    }, persistentDataApiMock);
-    api.put("/api/user/persistent/:apikey", {
-        params: {
-            data: { type: "string", source: "body" },
-            apikey: { type: "string" },
-        }
-    }, persistentDataApiMock);
-    
-    function persistentDataApiMock(req, res, next) {
-        var name = (req.params.pid || 0) + "-" + req.params.apikey;
-        var data = req.params.data;
-        console.log(name, data)
-        if (/[^\w+=\-]/.test(name))
-            return next(new Error("Invalid apikey"));
-        var path = join(options.installPath, ".c9", "persistent");
-        var method = req.method.toLowerCase()
-        if (method == "get") {
-            res.writeHead(200, {"Content-Type": "application/octet-stream"});
-            var stream = fs.createReadStream(path + "/" + name);
-            stream.pipe(res);
-        } else if (method == "put") {
-            require("mkdirp")(path, function(e) {
-                fs.writeFile(path + "/" + name, data, "", function(err) {
-                    if (err) return next(err);
-                    res.writeHead(200, {"Content-Type": "application/octet-stream"});
-                    res.end("");
-                });
-            });
-        }
-    }
     
     // fake authentication
     api.authenticate = api.authenticate || function() {
@@ -303,7 +261,7 @@ function plugin(options, imports, register) {
     };    
     api.updatConfig = api.updatConfig || function(opts, params) {
         var id = params.token;
-        opts.accessToken = opts.extendToken = id || "token";
+        opts.accessToken = id || "token";
         var user = opts.extendOptions.user;
         user.id = id || -1;
         user.name = id ? "user" + id : "johndoe";

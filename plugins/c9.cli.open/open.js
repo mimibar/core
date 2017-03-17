@@ -18,30 +18,39 @@ define(function(require, exports, module) {
         // var emit = plugin.getEmitter();
 
         var loaded;
-        function load(){
+        function load() {
             if (loaded) return;
             loaded = true;
             
             cmd.addCommand({
                 name: "open", 
                 info: "     Opens a file or directory.",
-                usage: "[--wait] <path>",
+                usage: "[--wait] [--pipe] <path>",
                 options: {
                     "wait": {
                         description: "Wait until the file(s) are closed",
                         "default": false,
                         "boolean": true
+                    },
+                    "pipe": {
+                        description: "Pipe data from a command into c9",
+                        "default": false,
+                        "boolean": true
                     }
                 },
                 check: function(argv) {
-                    if (argv._.length < 2 && !argv["path"])
+                    if (argv._.length < 2 && !argv["path"] && !argv.pipe)
                         throw new Error("Missing path");
                 },
                 exec: function(argv) {
+                    if (argv.pipe) {
+                        openWithPipe(function() {});
+                        return;
+                    }
                     open(
                         argv._.slice(1),  // Remove "open" from the paths
                         argv.wait,
-                        function(){});
+                        function() {});
                 }
             });
         }
@@ -126,6 +135,60 @@ define(function(require, exports, module) {
             });
         }
         
+        function openWithPipe(callback) {
+            bridge.send({
+                type: "pipe",
+                path: process.cwd() + "/" + "Pipe " + (new Date()).toLocaleString().replace(/:/g, "."),
+            }, function cb(err, response) {
+                if (err) {
+                    if (err.code == "ECONNREFUSED") {
+                        // Seems Cloud9 is not running, lets start it up
+                        startCloud9Local({}, function(success) {
+                            if (success)
+                                bridge.send({ type: "pipe" }, cb);
+                            else {
+                                console.log("Could not start Cloud9. "
+                                    + "Please check your configuration.");
+                                callback(err);
+                                
+                                process.exit(40); // This appears to be needed; let's return something useful
+                            }
+                        });
+                        return;
+                    }
+                    else {
+                        console.log(err.message);
+                        return;
+                    }    
+                }
+                
+                var stdin = process.openStdin();
+                stdin.setEncoding("utf8");
+                var finished = 0;
+                stdin.on("data", function(chunk) {
+                    finished++;
+                    bridge.send({
+                        type: "pipeData",
+                        data: chunk,
+                        tab: response
+                    }, function(err, message) {
+                        // Dunno why, but this always returns No Response...
+                        // Escaping that error so end users aren't confused...
+                        if (err && err.message !== "No Response") 
+                            console.log(err.message);
+                        finished--;
+                    });
+                });
+                stdin.on("end", function() {
+                    (function retry() {
+                        if (finished === 0)
+                            process.exit();
+                        setTimeout(retry, 100);
+                    })();
+                });
+            });
+        }
+        
         function startCloud9Local(opts, callback) {
             if (options.platform == "darwin") {
                 proc.spawn("open", {
@@ -139,7 +202,7 @@ define(function(require, exports, module) {
                     process.unref();
                     
                     var timed = Date.now();
-                    (function retry(){
+                    (function retry() {
                         bridge.send({ type: "ping" }, function(err, message) {
                             if (!err) 
                                 return callback(true);
@@ -168,16 +231,16 @@ define(function(require, exports, module) {
 
         /***** Lifecycle *****/
         
-        plugin.on("load", function(){
+        plugin.on("load", function() {
             load();
         });
-        plugin.on("enable", function(){
+        plugin.on("enable", function() {
             
         });
-        plugin.on("disable", function(){
+        plugin.on("disable", function() {
             
         });
-        plugin.on("unload", function(){
+        plugin.on("unload", function() {
             loaded = false;
         });
         

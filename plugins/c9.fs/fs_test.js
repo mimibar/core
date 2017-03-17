@@ -18,12 +18,6 @@ require(["lib/architect/architect", "lib/chai/chai", "/vfs-root"],
         "plugins/c9.vfs.client/endpoint",
         "plugins/c9.ide.auth/auth",
         
-        //Mock Plugins
-        {
-            consumes: ["Plugin"],
-            provides: ["auth.bootstrap", "info", "dialog.error"],
-            setup: expect.html.mocked
-        },
         {
             consumes: ["fs"],
             provides: [],
@@ -100,7 +94,7 @@ require(["lib/architect/architect", "lib/chai/chai", "/vfs-root"],
                             expect(body).equal(str);
                             expect(body.length).equal(str.length);
                             done();
-                            fs.rmfile("/file2.txt", function(){});
+                            fs.rmfile("/file2.txt", function() {});
                         });
                     });
                 });
@@ -162,13 +156,13 @@ require(["lib/architect/architect", "lib/chai/chai", "/vfs-root"],
                     fs.rmdir(vpath, {}, function(err) {
                         fs.mkdir(vpath, function(err) {
                             if (err) {
-                                fs.rmdir(vpath, {}, function(){});
+                                fs.rmdir(vpath, {}, function() {});
                                 return done(new Error(err.message));
                             }
                             
                             fs.exists(vpath, function(exist) {
                                 expect(exist, "Directory does not exist").equal(true);
-                                fs.rmdir(vpath, function(){});
+                                fs.rmdir(vpath, function() {});
                                 done();
                             });
                         });
@@ -180,7 +174,7 @@ require(["lib/architect/architect", "lib/chai/chai", "/vfs-root"],
                     fs.rmdir(vpath, {}, function(err) {
                         fs.mkdir(vpath, function(err) {
                             if (err) {
-                                fs.rmdir(vpath, {}, function(){});
+                                fs.rmdir(vpath, {}, function() {});
                                 return done(new Error(err.message));
                             }
                             
@@ -223,7 +217,7 @@ require(["lib/architect/architect", "lib/chai/chai", "/vfs-root"],
                                     done();
                                 });
                             });
-                        })
+                        });
                     });
                 });
                 it("should error with ENOENT if the file doesn't exist", function(done) {
@@ -265,7 +259,7 @@ require(["lib/architect/architect", "lib/chai/chai", "/vfs-root"],
                                     done();
                                 });
                             });
-                        })
+                        });
                     });
                 });
                 it("should error with ENOENT if the directory doesn't exist", function(done) {
@@ -285,6 +279,8 @@ require(["lib/architect/architect", "lib/chai/chai", "/vfs-root"],
                         expect(exists).ok;
                         
                         fs.rmdir(vpath, {}, function(err, meta) {
+                            if (err.code == "EACCES") // node sends EACCES on windows
+                                err.code = "ENOTDIR";
                             expect(err).property("code").equal("ENOTDIR");
                             done();
                         });
@@ -307,7 +303,7 @@ require(["lib/architect/architect", "lib/chai/chai", "/vfs-root"],
                                 });
                             });
                         });
-                    })
+                    });
                 });
             });
         
@@ -332,7 +328,7 @@ require(["lib/architect/architect", "lib/chai/chai", "/vfs-root"],
                                             fs.readFile(after, "utf8", function(err, data) {
                                                 expect(data).equal(text);
                                                 done();
-                                                fs.rmfile(after, function(){});
+                                                fs.rmfile(after, function() {});
                                             });
                                         });
                                     });
@@ -354,9 +350,9 @@ require(["lib/architect/architect", "lib/chai/chai", "/vfs-root"],
                 var target = "/copy.txt";
                 
                 it("should copy a file to a target that doesn't exist", function(done) {
-                    fs.unlink(target, function(){
+                    fs.unlink(target, function() {
                         fs.readFile(source, "utf8", function(err, text) {
-                            fs.copy(source, target, {overwrite: false}, function(err) {
+                            fs.copy(source, target, { overwrite: false }, function(err) {
                                 if (err) throw err.message;
                                 
                                 fs.exists(target, function(exists) {
@@ -368,7 +364,7 @@ require(["lib/architect/architect", "lib/chai/chai", "/vfs-root"],
                                         expect(data).equal(text);
                                         done();
                                     });
-                                })
+                                });
                             });
                         });
                     });
@@ -376,10 +372,10 @@ require(["lib/architect/architect", "lib/chai/chai", "/vfs-root"],
                 it("should copy a directory recursively when recursive = true", function(done) {
                     var target = "/dir2";
                     
-                    fs.rmdir(target, {recursive:true}, function(err) {
+                    fs.rmdir(target, { recursive: true }, function(err) {
                         // if (err) throw err.message;
                         
-                        fs.copy("/dir", target, {recursive: true}, function(err) {
+                        fs.copy("/dir", target, { recursive: true }, function(err) {
                             if (err) throw err.message;
                             
                             fs.exists(target, function(exists) {
@@ -390,18 +386,18 @@ require(["lib/architect/architect", "lib/chai/chai", "/vfs-root"],
                                 
                                     expect(data).length(14);
                                     
-                                    fs.rmdir(target, {recursive:true}, function(err) {
+                                    fs.rmdir(target, { recursive: true }, function(err) {
                                         if (err) throw err.message;
                                         done();
                                     });
                                 });
-                            })
+                            });
                         });
                     });
                 });
                 it("should copy a file over a target that already exists with overwrite = true", function(done) {
                     fs.readFile(source, "utf8", function(err, text) {
-                        fs.copy(source, target, {overwrite: true}, function(err) {
+                        fs.copy(source, target, { overwrite: true }, function(err) {
                             if (err) throw err.message;
                             
                             fs.exists(target, function(exists) {
@@ -413,13 +409,13 @@ require(["lib/architect/architect", "lib/chai/chai", "/vfs-root"],
                                     expect(data).equal(text);
                                     done();
                                 });
-                            })
+                            });
                         });
                     });
                 });
                 it("should copy a file over a target that already exists with overwrite = false", function(done) {
                     fs.readFile(source, "utf8", function(err, text) {
-                        fs.copy(source, target, {overwrite: false}, function(err, data) {
+                        fs.copy(source, target, { overwrite: false }, function(err, data) {
                             if (err) throw err.message;
                             
                             expect(data.to).to.equal("/copy.1.txt");
@@ -433,15 +429,15 @@ require(["lib/architect/architect", "lib/chai/chai", "/vfs-root"],
                                 
                                     expect(data).equal(text);
                                     done();
-                                    fs.unlink(filename, function(){});
-                                    fs.unlink(target, function(){});
+                                    fs.unlink(filename, function() {});
+                                    fs.unlink(target, function() {});
                                 });
-                            })
+                            });
                         });
                     });
                 });
                 it("should error with ENOENT if the source doesn't exist", function(done) {
-                    fs.copy("/badname.txt", "/copy.txt", {overwrite: false}, function(err) {
+                    fs.copy("/badname.txt", "/copy.txt", { overwrite: false }, function(err) {
                         expect(err).property("code").equal("ENOENT");
                         done();
                     });
@@ -452,7 +448,7 @@ require(["lib/architect/architect", "lib/chai/chai", "/vfs-root"],
                 it("should create a file symlink", function(done) {
                     var target = "/file.txt";
                     var vpath = "/newlink.txt";
-                    fs.unlink(vpath, function(){
+                    fs.unlink(vpath, function() {
                         fs.readFile(target, "utf8", function(err, text) {
                             if (err) throw err.message;
                             
@@ -462,7 +458,7 @@ require(["lib/architect/architect", "lib/chai/chai", "/vfs-root"],
                                 fs.readFile(vpath, "utf8", function(err, data) {
                                     expect(data).equal(text);
                                     done();
-                                    fs.unlink(vpath, function(){});
+                                    fs.unlink(vpath, function() {});
                                 });
                             });
                         });
@@ -471,14 +467,14 @@ require(["lib/architect/architect", "lib/chai/chai", "/vfs-root"],
                 it("should create a dir symlink", function(done) {
                     var target = "/dir";
                     var vpath = "/newlink";
-                    fs.unlink(vpath, function(){
+                    fs.unlink(vpath, function() {
                         fs.symlink(vpath, target, function(err, meta) {
                             if (err) throw err.message;
                             
                             fs.readdir(vpath, function(err, files) {
                                 expect(files).length.gt(1);
                                 done();
-                                fs.unlink(vpath, function(){});
+                                fs.unlink(vpath, function() {});
                             });
                         });
                     });
@@ -510,8 +506,8 @@ require(["lib/architect/architect", "lib/chai/chai", "/vfs-root"],
                             // expect(event).to.equal("change"); TODO
                             expect(filename).equal(vpath.substr(1));
                             
-                            setTimeout(function(){
-                                fs.unlink(vpath, function(){});
+                            setTimeout(function() {
+                                fs.unlink(vpath, function() {});
                                 inner = true;
                             }, 200);
                             
@@ -531,7 +527,7 @@ require(["lib/architect/architect", "lib/chai/chai", "/vfs-root"],
                             if (event == "init") return;
                             
                             fs.unwatch("/", c1);
-                            fs.unlink(vpath, function(){});
+                            fs.unlink(vpath, function() {});
                             expect(event).ok;
                             expect(filename).equal(vpath.substr(1));
                             done();

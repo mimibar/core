@@ -58,12 +58,12 @@ define(function(require, exports, module) {
         var installPrompted;
         
         var defaults = {
-            "flat-light" : ["#eaf0f7", "#000000", "#bed1e3", false], 
-            "flat-dark"  : ["#153649", "#FFFFFF", "#515D77", true],
-            "light" : ["rgb(248, 248, 231)", "#000000", "rgb(137, 193, 253)", false], 
-            "light-gray" : ["rgb(248, 248, 231)", "#000000", "rgb(137, 193, 253)", false], 
-            "dark"  : ["#153649", "#FFFFFF", "#515D77", true],
-            "dark-gray"  : ["#153649", "#FFFFFF", "#515D77", true]
+            "flat-light": ["#eaf0f7", "#000000", "#bed1e3", false], 
+            "flat-dark": ["#153649", "#FFFFFF", "#515D77", true],
+            "light": ["rgb(248, 248, 231)", "#000000", "rgb(137, 193, 253)", false], 
+            "light-gray": ["rgb(248, 248, 231)", "#000000", "rgb(137, 193, 253)", false], 
+            "dark": ["#153649", "#FFFFFF", "#515D77", true],
+            "dark-gray": ["#153649", "#FFFFFF", "#515D77", true]
         };
 
         var themeName;
@@ -76,7 +76,7 @@ define(function(require, exports, module) {
         // Import the CSS
         ui.insertCss(require("text!./style.css"), options.staticPrefix, handle);
         
-        handle.on("load", function(){
+        handle.on("load", function() {
             commands.addCommand({
                 name: "openterminal",
                 group: "Terminal",
@@ -92,7 +92,7 @@ define(function(require, exports, module) {
                         editorType: "terminal", 
                         focus: true,
                         pane: pane
-                    }, function(){});
+                    }, function() {});
                 }
             }, handle);
             
@@ -180,7 +180,7 @@ define(function(require, exports, module) {
                             active: true,
                             pane: this.parentNode.pane,
                             editorType: "terminal"
-                        }, function(){});
+                        }, function() {});
                     }
                 }), 200, handle);
 
@@ -193,7 +193,7 @@ define(function(require, exports, module) {
                 command: "switchterminal"
             }), 1550, handle);
             
-            function setSettings(){
+            function setSettings() {
                 libterm.cursorBlink = settings.getBool("user/terminal/@blinking");
                 libterm.scrollback = 
                     settings.getNumber("user/terminal/@scrollback") || 1000;
@@ -273,66 +273,68 @@ define(function(require, exports, module) {
             layout.on("themeChange", function(e) {
                 setSettings();
                 
-                var skin = e.oldTheme;
-                if (!(settings.get("user/terminal/@backgroundColor") == defaults[skin][0] &&
-                  settings.get("user/terminal/@foregroundColor") == defaults[skin][1] &&
-                  settings.get("user/terminal/@selectionColor") == defaults[skin][2] &&
-                  settings.get("user/terminal/@antialiasedfonts") == defaults[skin][3]))
+                var colors = defaults[e.oldTheme];
+                if (!colors) return;
+                if (!(settings.get("user/terminal/@backgroundColor") == colors[0] &&
+                  settings.get("user/terminal/@foregroundColor") == colors[1] &&
+                  settings.get("user/terminal/@selectionColor") == colors[2] &&
+                  settings.get("user/terminal/@antialiasedfonts") == colors[3]))
                     return false;
             });
             
             layout.on("themeDefaults", function(e) {
-                var skin = e.theme;
-                settings.set("user/terminal/@backgroundColor", defaults[skin][0]);
-                settings.set("user/terminal/@foregroundColor", defaults[skin][1]);
-                settings.set("user/terminal/@selectionColor", defaults[skin][2]);
-                settings.set("user/terminal/@antialiasedfonts", defaults[skin][3]);
+                var colors = defaults[e.theme];
+                if (!colors) return;
+                settings.set("user/terminal/@backgroundColor", colors[0]);
+                settings.set("user/terminal/@foregroundColor", colors[1]);
+                settings.set("user/terminal/@selectionColor", colors[2]);
+                settings.set("user/terminal/@antialiasedfonts", colors[3]);
             }, handle);
     
             // Settings UI
             
             prefs.add({
-                "Editors" : {
-                    "Terminal" : {
+                "Editors": {
+                    "Terminal": {
                         position: 100,
-                        "Text Color" : {
+                        "Text Color": {
                            type: "colorbox",
                            path: "user/terminal/@foregroundColor",
                            position: 10100
                         },
-                        "Background Color" : {
+                        "Background Color": {
                            type: "colorbox",
                            path: "user/terminal/@backgroundColor",
                            position: 10200
                         },
-                        "Selection Color" : {
+                        "Selection Color": {
                            type: "colorbox",
                            path: "user/terminal/@selectionColor",
                            position: 10250
                         },
-                        "Font Family" : {
+                        "Font Family": {
                            type: "textbox",
                            path: "user/terminal/@fontfamily",
                            position: 10300
                         },
-                        "Font Size" : {
+                        "Font Size": {
                            type: "spinner",
                            path: "user/terminal/@fontsize",
                            min: "1",
                            max: "72",
                            position: 11000
                         },
-                        "Antialiased Fonts" : {
+                        "Antialiased Fonts": {
                            type: "checkbox",
                            path: "user/terminal/@antialiasedfonts",
                            position: 12000
                         },
-                        "Blinking Cursor" : {
+                        "Blinking Cursor": {
                            type: "checkbox",
                            path: "user/terminal/@blinking",
                            position: 12000
                         },
-                        "Scrollback" : {
+                        "Scrollback": {
                            type: "spinner",
                            path: "user/terminal/@scrollback",
                            min: "1",
@@ -357,7 +359,7 @@ define(function(require, exports, module) {
                 }
             });
         });
-        handle.on("unload", function(){
+        handle.on("unload", function() {
             mnuTerminal = null;
             lastEditor = null;
             lastTerminal = null;
@@ -365,7 +367,7 @@ define(function(require, exports, module) {
             installPrompted = null;
         });
         
-        handle.draw = function(){
+        handle.draw = function() {
             ui.insertMarkup(null, markupMenu, handle);
             mnuTerminal = handle.getElement("mnuTerminal");
             
@@ -376,7 +378,7 @@ define(function(require, exports, module) {
                 }
             }
             
-            handle.draw = function(){};
+            handle.draw = function() {};
         };
         
         handle.Terminal = Terminal;
@@ -423,7 +425,7 @@ define(function(require, exports, module) {
                     barTerminal.setAttribute("class", "c9terminal");
                 });
                 
-                handle.on("settingsUpdate", function(){
+                handle.on("settingsUpdate", function() {
                     aceterm.renderer.updateFull();
                 }, plugin);
                 
@@ -438,7 +440,7 @@ define(function(require, exports, module) {
                     return cm.exec(command);
                 };
                 
-                plugin.on("unload", function(){
+                plugin.on("unload", function() {
                     aceterm.destroy();
                     container.innerHTML = "";
                     
@@ -446,7 +448,7 @@ define(function(require, exports, module) {
                     container = null;
                 });
                 
-                aceterm.on("focus", function(){
+                aceterm.on("focus", function() {
                     if (currentSession && !currentSession.connected && currentSession.reconnect)
                         currentSession.reconnect();
                 });
@@ -472,12 +474,12 @@ define(function(require, exports, module) {
                 }
             }
             
-            function focus(){
+            function focus() {
                 if (aceterm)
                     aceterm.focus();
             }
             
-            function blur(){
+            function blur() {
                 // var cursor = barTerminal.$ext.querySelector(".terminal .reverse-video");
                 // if (cursor && settings.getBool("user/terminal/blinking"))
                 //     cursor.parentNode.removeChild(cursor);
@@ -529,7 +531,7 @@ define(function(require, exports, module) {
                 
                 
                 aceSession.updatingStatus = true;
-                aceSession.c9session.getStatus({clients:true}, function(e, s) {
+                aceSession.c9session.getStatus({ clients: true }, function(e, s) {
                     aceSession.updatingStatus = false;
                     if (e) return console.warn(e);
                     
@@ -566,7 +568,7 @@ define(function(require, exports, module) {
                     + "(note that this can also happen when the workspace is open "
                     + "in another window; to resolve this, right click on the "
                     + "terminal and choose ‘detach other clients’)",
-                  function(){ // Hide
+                  function() { // Hide
                       settings.set("user/terminal/@collab", alert.dontShow);
                   }, {
                       showDontShow: true
@@ -607,7 +609,7 @@ define(function(require, exports, module) {
                     var screenBottom = config.height - coverHeight + config.offset + 2;
                     var screenRight = (cols - this.width) * config.characterWidth;
                     
-                    html.push("<div style='height:", coverHeight, "px;", "left:0; right: ", screenRight, "px; top:",  screenBottom, "px;' ", 
+                    html.push("<div style='height:", coverHeight, "px;", "left:0; right: ", screenRight, "px; top:", screenBottom, "px;' ", 
                             "class='c9terminalcontainer cover bottom'></div>",
                         "<div style='width:", screenRight, "px; height: ", screenBottom, "px; top:0; right:0;' ",
                             "class='c9terminalcontainer cover right'></div>",
@@ -620,7 +622,7 @@ define(function(require, exports, module) {
                 if (aceSession.ace)
                     aceSession.ace.on("click", showTmuxDotsHelp);
             }
-            function isTmuxBorderChar(x){ return !x || x[1] && "\xb7\u2500\u2502\u2518".indexOf(x[1]) != -1 }
+            function isTmuxBorderChar(x) { return !x || x[1] && "\xb7\u2500\u2502\u2518".indexOf(x[1]) != -1; }
             function clearTmuxBorders(terminal) {
                 var trimmed = false;
                 var lines = terminal.lines;
@@ -644,8 +646,8 @@ define(function(require, exports, module) {
                 session.getOutputHistory({}, function(e, data) {
                     if (!e && data) {
                         session.terminal.setOutputHistory(data, true);
-                        session.getStatus({clients: true}, function(e, status) {
-                            if (e) return;
+                        session.getStatus({ clients: true }, function(e, status) {
+                            if (e || !status) return;
                             if (status.clients && status.clients.length > 0) {
                                 var terminal = session.terminal;
                                 var rows = terminal.rows;
@@ -735,7 +737,7 @@ define(function(require, exports, module) {
                 session.aceSession.resize = session.resize.bind(session);
                 
                 // delay a little until we have correct size
-                aceterm.renderer.once("afterRender", function start(){
+                aceterm.renderer.once("afterRender", function start() {
                     if (session.resize() === false)
                         return aceterm.renderer.once("afterRender", start);
                     // Lets get our TMUX process
@@ -771,13 +773,13 @@ define(function(require, exports, module) {
                 var doc = e.doc;
                 var session = doc.getSession();
                 
-                session.__defineGetter__("tab", function(){ return doc.tab });
-                session.__defineGetter__("doc", function(){ return doc });
-                session.__defineGetter__("defaultEditor", function(){ 
+                session.__defineGetter__("tab", function() { return doc.tab; });
+                session.__defineGetter__("doc", function() { return doc; });
+                session.__defineGetter__("defaultEditor", function() { 
                     return settings.getBool("user/terminal/@defaultEnvEditor");
                 });
                 
-                session.attach = function(){
+                session.attach = function() {
                     if (session.aceSession && aceterm) {
                         aceterm.setSession(session.aceSession);
                         aceterm.container.style.display = "block";
@@ -786,16 +788,16 @@ define(function(require, exports, module) {
                         aceterm.container.style.display = "none";
                 };
                 
-                session.detach = function(){
+                session.detach = function() {
                     // if (session.aceSession)
                     //     aceterm.setSession(session.aceSession);
                 };
                 
-                session.kill = function(){
+                session.kill = function() {
                     tmuxConnection.kill(this);
                 };
                 
-                session.warn = function(err){
+                session.warn = function(err) {
                     if (err.code == "EINSTALL" && !installPrompted) {
                         installPrompted = true;
                         question.show("Wrong version of dependencies installed",
@@ -803,10 +805,10 @@ define(function(require, exports, module) {
                             "Cloud9 detected you have unsupported version of a dependency "
                               + "installed. Would you like to open the installer "
                               + "to update to the latest version?",
-                            function(){ // Yes
+                            function() { // Yes
                                 installer.reinstall("Cloud9 IDE");
                             },
-                            function(){ // No
+                            function() { // No
                                 // Do nothing
                             },
                             {
@@ -814,7 +816,7 @@ define(function(require, exports, module) {
                                 no: "Not now",
                             });
                     }
-                }
+                };
                 
                 session.setState = function(state) {
                     if (!plugin.loaded)
@@ -916,7 +918,7 @@ define(function(require, exports, module) {
                     this.updatePtySize();
                 };
                 
-                function setTabColor(){
+                function setTabColor() {
                     var bg = settings.get("user/terminal/@backgroundColor");
                     var shade = util.shadeColor(bg, 0.75);
                     var skinName = settings.get("user/general/@skin");
@@ -957,7 +959,7 @@ define(function(require, exports, module) {
                 session.output = isOutputTerminal;
 
                 // When document gets unloaded everything should be cleaned up
-                doc.on("unload", function(){
+                doc.on("unload", function() {
                     // Stop the shell process at the remote machine
                     if (!options.testing)
                         session.kill();
@@ -973,8 +975,8 @@ define(function(require, exports, module) {
                 }, doc);
                 
                 if (isOutputTerminal) {
-                    session.connect = function(){
-                        session.connect = function(){};
+                    session.connect = function() {
+                        session.connect = function() {};
                         
                         // Connect to a new or attach to an existing tmux session
                         createTerminal(session, e.state);
@@ -987,20 +989,20 @@ define(function(require, exports, module) {
                 }
                 
                 var tab = doc.tab;
-                tab.on("beforeClose", function(){
+                tab.on("beforeClose", function() {
                     if (!settings.getBool("user/terminal/noclosequestion") 
                       && !tab.meta.$ignore && !options.testing) {
                         question.show("Close Terminal?",
                             "Are you sure you want to close this terminal?",
                             "Closing this terminal will stop any processes that it hosts.",
-                            function(){ // Yes
+                            function() { // Yes
                                 tab.meta.$ignore = true;
                                 tab.close();
                                 
                                 if (question.dontAsk)
                                     settings.set("user/terminal/noclosequestion", "true");
                             }, 
-                            function(){ // No
+                            function() { // No
                                 // do nothing; allow user to continue
                                 
                                 if (question.dontAsk)
@@ -1090,7 +1092,7 @@ define(function(require, exports, module) {
                 }
             });
             
-            plugin.on("clear", function(){
+            plugin.on("clear", function() {
                 if (currentSession) {
                     var t = currentSession.terminal;
                     if (!t) return;
@@ -1130,7 +1132,7 @@ define(function(require, exports, module) {
                     lastEditor = null;
             });
             
-            plugin.on("blur", function(){
+            plugin.on("blur", function() {
                 blur();
             });
             
@@ -1138,15 +1140,15 @@ define(function(require, exports, module) {
                 resize(e);
             });
             
-            plugin.on("enable", function(){
+            plugin.on("enable", function() {
                 
             });
             
-            plugin.on("disable", function(){
+            plugin.on("disable", function() {
                 
             });
             
-            plugin.on("unload", function(){
+            plugin.on("unload", function() {
                 
             });
             
@@ -1272,14 +1274,14 @@ define(function(require, exports, module) {
                  * @property {Ace.Editor} ace
                  * @readonly
                  */
-                get ace(){ return aceterm; },
+                get ace() { return aceterm; },
                 
                 /**
                  * The HTMLElement containing the termainl.
                  * @property {HTMLElement} container
                  * @readonly
                  */
-                get container(){ return container; },
+                get container() { return container; },
                 
                 _events: [
                     /**
@@ -1304,7 +1306,7 @@ define(function(require, exports, module) {
                 /**
                  * @ignore This is here to overwrite default behavior
                  */
-                isClipboardAvailable: function(e) { return !e.fromKeyboard },
+                isClipboardAvailable: function(e) { return !e.fromKeyboard; },
                 
                 /**
                  * Writes a string to the terminal. The message is send to the 
@@ -1313,6 +1315,14 @@ define(function(require, exports, module) {
                  * @param {String} message the message to write to the terminal.
                  */
                 write: write,
+                
+                getPathAsync: function(callback) {
+                    if (!currentSession || !currentSession.getStatus)
+                        return callback("not ready");
+                    currentSession.getStatus({}, function(err, result) {
+                        callback(err, result && util.normalizePath(result.path));
+                    });
+                },
 
                 // toggleMouse : toggleMouse,
                 // toggleStatus : toggleStatus,

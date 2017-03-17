@@ -54,16 +54,6 @@ require(["lib/architect/architect", "lib/chai/chai"],
         },
         "plugins/c9.fs/fs.cache.xml",
         
-        // Mock plugins
-        {
-            consumes: ["apf", "ui", "Plugin"],
-            provides: [
-                "commands", "menus", "commands", "layout", "watcher", "proc",
-                "save", "anims", "clipboard", "dialog.alert", "auth.bootstrap",
-                "info", "dialog.error"
-            ],
-            setup: expect.html.mocked
-        },
         {
             consumes: ["tabManager", "ui", "fs.cache", "fs"],
             provides: [],
@@ -104,14 +94,29 @@ require(["lib/architect/architect", "lib/chai/chai"],
       
                 document.body.style.marginBottom = "33%";
                 
-                tabs.once("ready", function(){
+                tabs.once("ready", function() {
                     tabs.getPanes()[0].focus();
                     done();
                 });
             });
             
             var text;
-            describe("open(), openFile(), openEditor() and reload()", function(){
+            describe("open(), openFile(), openEditor() and reload()", function() {
+                it('should recover from state with no panes', function(done) {
+                    var oldState = tabs.getState();
+                    tabs.setState({
+                        "nodes": [],
+                        "type": "hsplitbox"
+                    }, function() {});
+                    tabs.openEditor("timeview", function(err, tab) {
+                        expect(tabs.getTabs()).length(1);
+                        
+                        expect(tabs.focussedTab)
+                            .to.exist
+                            .to.equal(tab);
+                        tabs.setState(oldState, done);
+                    });
+                });
                 it('should open a pane from a path', function(done) {
                     var vpath = "/file.txt";
                     tabs.openFile(vpath, function(err, tab) {
@@ -225,7 +230,7 @@ require(["lib/architect/architect", "lib/chai/chai"],
                 });
             });
 
-            describe("File system rename hooks - change open tab paths", function(){
+            describe("File system rename hooks - change open tab paths", function() {
                 it('should rename a file  - change page path', function(done) {
                     var vpath = "/dir/stuff.json";
                     var newVpath = "/dir/stuff2.json";
@@ -249,7 +254,7 @@ require(["lib/architect/architect", "lib/chai/chai"],
 
                 it('should rename a directory  - change tab path', function(done) {
                     var vpath = "/dir/stuff.json";
-                    fs.rmdir("/dir2", { recursive: true }, function(){
+                    fs.rmdir("/dir2", { recursive: true }, function() {
                         tabs.openFile(vpath, function(err, tab) {
                             expect(tab.path).to.equal(vpath);
                             expect(tab.title).to.equal("stuff.json");
@@ -271,7 +276,7 @@ require(["lib/architect/architect", "lib/chai/chai"],
                 });
             });
 
-            describe("getTabs(), getPanes()", function(){
+            describe("getTabs(), getPanes()", function() {
                 it('should return a list containing all the pages', function(done) {
                     expect(tabs.getTabs()).length.gt(4);
                     done();
@@ -286,13 +291,13 @@ require(["lib/architect/architect", "lib/chai/chai"],
                     done();
                 });
             });
-            describe("switchEditor()", function(){
+            describe("switchEditor()", function() {
                 it('should switch to another editor for the selected tab', function(done) {
                     var tab = tabs.focusTab("/file.txt");
-                    tab.switchEditor("imgview", function(){
+                    tab.switchEditor("imgview", function() {
                         expect(tabs.focussedTab.editor)
                             .property("type").to.equal("imgview");
-                        tab.switchEditor("texteditor", function(){
+                        tab.switchEditor("texteditor", function() {
                             expect(tabs.focussedTab.document.value).to.equal(text);
                             done();
                         });
@@ -300,10 +305,10 @@ require(["lib/architect/architect", "lib/chai/chai"],
                 });
                 it('should switch to another editor for a given tab (not selected)', function(done) {
                     var tab = tabs.findTab("/listing.json");
-                    tab.switchEditor("imgview", function(){
+                    tab.switchEditor("imgview", function() {
                         expect(tab.editor)
                             .property("type").to.equal("imgview");
-                        tab.switchEditor("texteditor", function(){
+                        tab.switchEditor("texteditor", function() {
                             expect(tabs.focussedTab.document.value).to.equal(text);
                             done();
                         });
@@ -311,7 +316,7 @@ require(["lib/architect/architect", "lib/chai/chai"],
                 });
             });
 
-            describe("clear(), getState() and setState()", function(){
+            describe("clear(), getState() and setState()", function() {
                 var state, info = {};
                 it('should retrieve the state', function(done) {
                     state = tabs.getState();
@@ -324,10 +329,10 @@ require(["lib/architect/architect", "lib/chai/chai"],
                     var count = 0, expected = 0;
                     tabs.getTabs().forEach(function(tab) {
                         expected += 2;
-                        tab.on("unload", function(){
+                        tab.on("unload", function() {
                             count++;
                         });
-                        tab.document.on("unload", function(){
+                        tab.document.on("unload", function() {
                             count++;
                         });
                     });
@@ -369,13 +374,13 @@ require(["lib/architect/architect", "lib/chai/chai"],
 //                });
 //            });
 
-            describe("vsplit(), hsplit(), removeTab()", function(){
+            describe("vsplit(), hsplit(), removeTab()", function() {
                 it('should split a pane vertically, making the existing pane the top one', function(done) {
                     var pane = tabs.focussedTab.pane;
                     var btmtab = pane.vsplit(true);
                     expect(pane.aml.getTop()).lt(btmtab.aml.getTop());
                     tabs.focussedTab.attachTo(btmtab);
-                    tabs.on("tabAfterActivate", function c1(){
+                    tabs.on("tabAfterActivate", function c1() {
                         expect(tabs.focussedTab.title).to.equal("file.txt");
                         expect(tabs.focussedTab.document.value).to.equal(text);
                         expect(tabs.focussedTab.editor).to.equal(tabs.focussedTab.pane.aml.getPage("editor::texteditor").editor);
@@ -400,7 +405,7 @@ require(["lib/architect/architect", "lib/chai/chai"],
                     var toptab = pane.vsplit();
                     expect(toptab.aml.getTop()).lt(pane.aml.getTop());
                     tabs.focussedTab.attachTo(toptab);
-                    tabs.on("tabAfterActivate", function c1(){
+                    tabs.on("tabAfterActivate", function c1() {
                         expect(tabs.focussedTab.title).to.equal("file.txt");
                         expect(tabs.focussedTab.document.value).to.equal(text);
                         expect(tabs.focussedTab.editor).to.equal(tabs.focussedTab.pane.aml.getPage("editor::texteditor").editor);
@@ -566,7 +571,7 @@ require(["lib/architect/architect", "lib/chai/chai"],
 //            });
 
             if (!onload.remain) {
-                describe("unload()", function(){
+                describe("unload()", function() {
                     it('should destroy all ui elements when it is unloaded', function(done) {
                         expect(tabs.getPanes()).length(5);
                         var els = tabs.getPanes();

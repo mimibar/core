@@ -15,8 +15,8 @@ else
   exit 1
 fi
 
-cd `dirname $0`/..
-SOURCE=`pwd`
+cd "$(dirname "$0")/.."
+SOURCE=$(pwd)
 
 uname="$(uname -a)"
 os=
@@ -44,60 +44,16 @@ blue=$'\e[01;34m'
 magenta=$'\e[01;35m'
 resetColor=$'\e[0m'
 
-NO_PULL=
-NO_GLOBAL_INSTALL=
-FORCE=
-
-updatePackage() {
-    name=$1
-    
-    REPO=https://github.com/c9/$name
-    echo "${green}checking out ${resetColor}$REPO"
-    
-    if ! [[ -d ./plugins/$name ]]; then
-        mkdir -p ./plugins/$name
-    fi
-    
-    pushd ./plugins/$name
-    if ! [[ -d .git ]]; then
-        git init
-        # git remote rm origin || true
-        git remote add origin $REPO
-    fi
-    
-    version=`"$NODE" -e 'console.log((require("../../package.json").c9plugins["'$name'"].substr(1) || "origin/master"))'`;
-    rev=`git rev-parse --revs-only $version`
-    
-    if [ "$rev" == "" ]; then
-        git fetch origin
-    fi
-    
-    status=`git status --porcelain --untracked-files=no`
-    if [ "$status" == "" ]; then
-        git reset $version --hard
-    else
-        echo "${yellow}$name ${red}contains uncommited changes.${yellow} Skipping...${resetColor}"
-    fi
-    popd
-}
-
-updateAllPackages() {
-    c9packages=(`"$NODE" -e 'console.log(Object.keys(require("./package.json").c9plugins).join(" "))'`)
-    count=${#c9packages[@]}
-    i=0
-    for m in ${c9packages[@]}; do echo $m; 
-        i=$(($i + 1))
-        echo "updating plugin ${blue}$i${resetColor} of ${blue}$count${resetColor}"
-        updatePackage $m
-    done
-}
+# NO_PULL=
+# NO_GLOBAL_INSTALL=
+# FORCE=
 
 updateNodeModules() {
     echo "${magenta}--- Running npm install --------------------------------------------${resetColor}"
     safeInstall(){
-        deps=(`"$NODE" -e 'console.log(Object.keys(require("./package.json").dependencies).join(" "))'`)
-        for m in $deps; do echo $m; 
-            "$NPM" install --loglevel warn $m || true
+        deps=$("$NODE" -e 'console.log(Object.keys(require("./package.json").dependencies).join(" "))');
+        for m in ${deps[@]}; do echo "$m"; 
+            "$NPM" install --loglevel warn "$m"
         done
     }
     "$NPM" install || safeInstall
@@ -111,7 +67,7 @@ updateCore() {
     
     # without this git merge fails on windows
     mv ./scripts/install-sdk.sh  './scripts/.#install-sdk-tmp.sh'
-    rm ./scripts/.install-sdk-tmp.sh 
+    rm -f ./scripts/.install-sdk-tmp.sh 
     cp './scripts/.#install-sdk-tmp.sh' ./scripts/install-sdk.sh
     git checkout -- ./scripts/install-sdk.sh
 
@@ -119,14 +75,6 @@ updateCore() {
     git fetch c9
     git merge c9/master --ff-only || \
         echo "${yellow}Couldn't automatically update sdk core ${resetColor}"
-
-    ## TODO use fetched script?
-    # oldScript="$(cat ./scripts/install-sdk.sh)"
-    # newScript="$(cat ./scripts/install-sdk.sh)"
-    # if ! [ "$oldScript" == "$newScript" ]; then
-    #     ./scripts/install-sdk.sh --no-pull
-    #     exit
-    # fi
 }
 
 
@@ -144,7 +92,7 @@ installGlobalDeps() {
 
 ############################################################################
 export C9_DIR="$HOME"/.c9
-if ! [[ `which npm` ]]; then
+if ! [[ $(which npm) ]]; then
     if [[ $os == "windows" ]]; then
         export PATH="$C9_DIR:$C9_DIR/node_modules/.bin:$PATH"
     else
@@ -161,7 +109,6 @@ rm -rf ./build/standalone
 updateCore || true
 
 installGlobalDeps
-updateAllPackages
 updateNodeModules
 
 echo -e "c9.*\n.gitignore" >  plugins/.gitignore

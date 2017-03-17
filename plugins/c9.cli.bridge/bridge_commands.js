@@ -2,7 +2,7 @@
 define(function(require, exports, module) {
     main.consumes = [
         "Plugin", "bridge", "tabManager", "panels", "tree.favorites", "tree", 
-        "fs", "preferences", "settings", "c9"
+        "fs", "preferences", "settings", "c9", "commands"
     ];
     main.provides = ["bridge.commands"];
     return main;
@@ -18,6 +18,7 @@ define(function(require, exports, module) {
         var fs = imports.fs;
         var c9 = imports.c9;
         var prefs = imports.preferences;
+        var commands = imports.commands;
         
         var async = require("async");
         
@@ -28,13 +29,22 @@ define(function(require, exports, module) {
         
         var BASEPATH = options.basePath;
         
-        function load(){
+        function load() {
             bridge.on("message", function(e) {
                 var message = e.message;
                 
                 switch (message.type) {
                     case "open":
                         open(message, e.respond);
+                        break;
+                    case "exec":
+                        exec(message, e.respond);
+                        break;
+                    case "pipe":
+                        createPipe(message, e.respond);
+                        break;
+                    case "pipeData":
+                        updatePipe(message, e.respond);
                         break;
                     case "ping":
                         e.respond(null, true);
@@ -53,9 +63,9 @@ define(function(require, exports, module) {
             }, plugin);
             
             prefs.add({
-                "Editors" : {
-                    "Terminal" : {
-                        "Use Cloud9 as the Default Editor" : {
+                "Editors": {
+                    "Terminal": {
+                        "Use Cloud9 as the Default Editor": {
                             type: "checkbox",
                             path: "user/terminal/@defaultEnvEditor",
                             position: 14000
@@ -66,6 +76,30 @@ define(function(require, exports, module) {
         }
         
         /***** Methods *****/
+        function createPipe(message, callback) {
+            tabManager.once("ready", function() {
+                tabManager.open({
+                    focus: true,
+                    editorType: "ace",
+                    path: message.path && c9.toInternalPath(message.path),
+                    document: { meta: { newfile: true }}
+                }, function(err, tab) {
+                    if (err) 
+                        return callback(err);
+                    callback(null, tab.path || tab.name);
+                });
+            }); 
+        }
+        
+        function updatePipe(message, callback) {
+            tabManager.once("ready", function() {
+                var tab = tabManager.findTab(message.tab);
+                var c9Session = tab && tab.document.getSession();
+                if (c9Session && c9Session.session)
+                    c9Session.session.insert({ row: Number.MAX_VALUE, column: Number.MAX_VALUE }, message.data);
+                callback(null, true);
+            });
+        }
         
         function open(message, callback) {
             var i = -1;
@@ -101,20 +135,30 @@ define(function(require, exports, module) {
                     tree.focus();
                 }
                 else {
-                    tabManager.once("ready", function(){
+                    tabManager.once("ready", function() {
+                        var m = /:(\d*)(?::(\d*))?$/.exec(path);
+                        var jump = {};
+                        if (m) {
+                            if (m[1])
+                                jump.row = parseInt(m[1], 10) - 1;
+                            if (m[2])
+                                jump.column = parseInt(m[2], 10);
+                            path = path.slice(0, m.index);
+                        }
+                        
                         fs.exists(path, function(existing) {
                             var tab = tabManager.open({
                                 path: path,
                                 focus: i === 0,
                                 document: existing
-                                    ? undefined
-                                    : { meta : { newfile: true } }
-                            }, function(){
-                                next();
+                                    ? { ace: { jump: jump }}
+                                    : { meta: { newfile: true }}
+                            }, function() {
+                                setTimeout(next); // TabManager calls this before returning the tab!
                             });
                             
                             if (message.wait) {
-                                tab.on("close", function(){
+                                tab.on("close", function() {
                                     tabs.splice(tabs.indexOf(tab), 1);
                                     if (!tabs.length)
                                         callback(null, true);
@@ -125,7 +169,7 @@ define(function(require, exports, module) {
                         });
                     });
                 }
-            }, function(err){
+            }, function(err) {
                 if (err)
                     return callback(err);
                     
@@ -133,14 +177,20 @@ define(function(require, exports, module) {
                     callback(null, true);
             });
         }
+
+        function exec(message, callback) {
+            var result = commands.exec(message.command, message.args);
+            var err = result ? null : "command failed";
+            callback(err, result);
+        }
         
         /***** Lifecycle *****/
         
-        plugin.on("load", function(){
+        plugin.on("load", function() {
             load();
         });
         
-        plugin.on("unload", function(){
+        plugin.on("unload", function() {
             
         });
         

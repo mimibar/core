@@ -1,6 +1,6 @@
 define(function(require, module, exports) {
     main.consumes = [
-        "Plugin", "menus", "ui"
+        "Plugin", "menus", "ui", "settings"
     ];
     main.provides = ["editors"];
     return main;
@@ -9,6 +9,7 @@ define(function(require, module, exports) {
         var ui = imports.ui;
         var Plugin = imports.Plugin;
         var menus = imports.menus;
+        var settings = imports.settings;
         
         var extname = require("path").extname;
         var basename = require("path").basename;
@@ -24,14 +25,14 @@ define(function(require, module, exports) {
         var group;
         
         var loaded = false;
-        function load(){
+        function load() {
             if (loaded) return false;
             loaded = true;
             
             plugin.addElement(group = new ui.group());
             
             menus.addItemByPath("View/Editors/", new ui.menu({
-                "onprop.visible" : function(e) {
+                "onprop.visible": function(e) {
                     if (!e.value)
                         return;
                     
@@ -69,6 +70,11 @@ define(function(require, module, exports) {
         function findEditorByFilename(fn) {
             var ext = extname(fn).substr(1).toLowerCase();
             var filename = basename(fn).toLowerCase();
+            
+            // Check custom user settings first for preferred editor
+            var customEditor = settings.get("user/tabs/editorTypes/@" + ext);
+            if (customEditor) return customEditor;
+            
             var editor = fileExtensions[fn] && fileExtensions[fn][0]
                 || fileExtensions[filename] && fileExtensions[filename][0]
                 || fileExtensions[ext] && fileExtensions[ext][0]
@@ -96,8 +102,8 @@ define(function(require, module, exports) {
                         type: "radio",
                         value: type,
                         group: group,
-                        onclick: function(){
-                            emit("menuClick", {value: this.value});
+                        onclick: function() {
+                            emit("menuClick", { value: this.value });
                         }
                     }), 40000, handle);
             }
@@ -111,13 +117,13 @@ define(function(require, module, exports) {
             if (editor.type == options.defaultEditor)
                 defaultEditor = editor;
             
-            emit("register", {editor: editor});
+            emit("register", { editor: editor });
             
-            handle.on("load", function(){
+            handle.on("load", function() {
                 if (!editors[type])
                     registerPlugin(type, caption, editor, extensions);
             });
-            handle.on("unload", function(){
+            handle.on("unload", function() {
                 unregisterPlugin(type, editor, extensions);
             });
             return handle;
@@ -138,7 +144,7 @@ define(function(require, module, exports) {
             if (defaultEditor == editor)
                 defaultEditor = null;
             
-            emit("unregister", {editor: editor});
+            emit("unregister", { editor: editor });
         }
         
         function createEditor(type, callback) {
@@ -146,7 +152,7 @@ define(function(require, module, exports) {
             
             var cancelled = false;
             
-            function create(){
+            function create() {
                 if (cancelled) return;
                 var constr = editors[type];
                 var editor = constr ? new constr() : false;
@@ -166,22 +172,22 @@ define(function(require, module, exports) {
                         setTimeout(create);
                     }
                 });
-                return function cancel() { cancelled = true };
+                return function cancel() { cancelled = true; };
             }
         }
         
         /***** Lifecycle *****/
         
-        plugin.on("load", function(){
+        plugin.on("load", function() {
             load();
         });
-        plugin.on("enable", function(){
+        plugin.on("enable", function() {
             
         });
-        plugin.on("disable", function(){
+        plugin.on("disable", function() {
             
         });
-        plugin.on("unload", function(){
+        plugin.on("unload", function() {
             loaded = false;
             defaultEditor = null;
             group = null;
@@ -208,13 +214,13 @@ define(function(require, module, exports) {
              * 
              * @property {String} defaultEditor
              */
-            get defaultEditor(){ return options.defaultEditor; },
+            get defaultEditor() { return options.defaultEditor; },
             
             /**
              * Array of file extensions supported by the registered editors
              * @property {String[]} fileExtensions  
              */
-            get fileExtensions(){ return fileExtensions; },
+            get fileExtensions() { return fileExtensions; },
             
             _events: [
                 /**

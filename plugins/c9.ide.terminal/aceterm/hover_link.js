@@ -23,7 +23,7 @@ var HoverLink = function(editor) {
     event.addListener(editor.renderer.container, "contextmenu", this.onContextMenu);
 };
 
-(function(){
+(function() {
     oop.implement(this, EventEmitter);
     
     this.token = {};
@@ -39,7 +39,7 @@ var HoverLink = function(editor) {
         var row = Math.floor((this.y + renderer.scrollTop - canvasPos.top) / renderer.lineHeight);
         var col = Math.round(offset);
 
-        var screenPos = {row: row, column: col, side: offset - col > 0 ? 1 : -1};
+        var screenPos = { row: row, column: col, side: offset - col > 0 ? 1 : -1 };
         var session = editor.session;
         var docPos = session.screenToDocumentPosition(screenPos.row, screenPos.column);
         
@@ -87,7 +87,7 @@ var HoverLink = function(editor) {
         var match;
         regExp.lastIndex = 0;
         string.replace(regExp, function(str) {
-            var offset = arguments[arguments.length-2];
+            var offset = arguments[arguments.length - 2];
             var length = str.length;
             if (offset <= col && offset + length >= col)
                 match = {
@@ -102,7 +102,8 @@ var HoverLink = function(editor) {
     this.onClick = function(e) {
         if (!this.editor.isFocused())
             return;
-        
+        if (e.detail != 1)
+            return;
         if (this.link && this.isOpen) { // && this.link.isFocused
             if (this.editor.selection.isEmpty()) {
                 this.editor.selection.setSelectionRange(this.range);
@@ -182,7 +183,7 @@ var HoverLink = function(editor) {
         var value = match.value;
         if (/^https?:|\bc9.io\b|(\d{1,3}\b.?){4}|localhost/.test(value)) {
             match.type = "link";
-            var m =  /((https?:\/\/)?(\d{1,3}\b.?){4}(:\d+[^\d\/]|[^:\d\/]))/.exec(value);
+            var m = /((https?:\/\/)?(\d{1,3}\b.?){4}(:\d+[^\d\/]|[^:\d\/]))/.exec(value);
             if (m)
                 value = m[0].slice(0, -1);
             value = value.replace(/[>)}\].,;:]+$/, "");
@@ -309,7 +310,7 @@ var HoverLink = function(editor) {
         else if (prompt.command === "git") { // git status
             var prefix = line.substr(0, match.start);
             if (match.start + value.length == line.length
-                && /^(#|[ MDR?A]{2})\s+([\w\s]+:\s+)?$/.test(prefix)
+                && /^(#|[ MDRU?A]{2})\s+([\w\s]+:\s+)?$/.test(prefix)
             ) {
                 match.type = "path";
             } else {

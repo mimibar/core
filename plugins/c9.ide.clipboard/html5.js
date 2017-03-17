@@ -31,14 +31,14 @@ define(function(require, exports, module) {
         var nativeObject;
         
         var loaded = false;
-        function load(){
+        function load() {
             if (loaded) return false;
             loaded = true;
         }
         
         /***** Methods *****/
         
-        function clear(){
+        function clear() {
             if (nativeObject)
                 nativeObject.clearData();
             else {
@@ -51,21 +51,19 @@ define(function(require, exports, module) {
         function set(type, data, list) {
             if (notSupported(type))
                 return;
-                
-            type = convertType(type);
             
             if (nativeObject) {
-                nativeObject.setData(type, data);
+                handleClipboardData(nativeObject, type, data);
                 return true;
             }
             
             var setData = function(e) {
                 if (list) {
                     list.forEach(function(type) {
-                        e.clipboardData.setData(type, data);
+                        handleClipboardData(e.clipboardData, type, data);
                     });
                 }
-                e.clipboardData.setData(type, data);
+                handleClipboardData(e.clipboardData, type, data);
                 
                 e.preventDefault();
                 e.stopPropagation();
@@ -82,17 +80,15 @@ define(function(require, exports, module) {
         function get(type, full) {
             if (notSupported(type))
                 return;
-                
-            type = convertType(type);
             
             if (!full && nativeObject)
-                return nativeObject.getData(type);
+                return handleClipboardData(nativeObject, type);
             
             var data;
             var getData = function(e) {
                 data = full
                     ? e.clipboardData
-                    : e.clipboardData.getData(type);
+                    : handleClipboardData(e.clipboardData, type);
                 e.preventDefault();
                 e.stopPropagation();
             };
@@ -120,30 +116,44 @@ define(function(require, exports, module) {
             return !/text($|\/)/.test(type);
         }
         
-        function convertType(type) {
-            return document.all ? "Text" : type;
+        function handleClipboardData(clipboardData, type, data, forceIEMime) {
+            if (!clipboardData)
+                return;
+            // using "Text" doesn't work on old webkit but ie needs it
+            var mime = forceIEMime ? "Text" : type;
+            try {
+                if (data) {
+                    // Safari 5 has clipboardData object, but does not handle setData()
+                    return clipboardData.setData(mime, data) !== false;
+                } else {
+                    return clipboardData.getData(mime);
+                }
+            } catch (e) {
+                if (!forceIEMime)
+                    return handleClipboardData(clipboardData, type, data, true);
+            }
         }
         
         function wrap(obj) {
             nativeObject = obj;
         }
         
-        function unwrap(){
+        function unwrap() {
             nativeObject = window.clipboardData; // for ie and firefox addon
         }
         
         /***** Lifecycle *****/
         
-        plugin.on("load", function(){
+        plugin.on("load", function() {
             load();
         });
-        plugin.on("enable", function(){
+        plugin.on("enable", function() {
             
         });
-        plugin.on("disable", function(){
+        plugin.on("disable", function() {
             
         });
-        plugin.on("unload", function(){
+        plugin.on("unload", function() {
             loaded = false;
             nativeObject = null;
         });

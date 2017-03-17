@@ -159,10 +159,6 @@ define(function(require, exports, module) {
             }
         }
 
-        function trimRight(str) {
-            return str.replace(/\s+$/, "");
-        }
-
         /* -- npm Management ----- */
 
         /**
@@ -207,8 +203,8 @@ define(function(require, exports, module) {
 
                 if (err) return callback(err, stdout, err.message);
 
-                stdout = trimRight(stdout);
-                stderr = trimRight(stderr);
+                stdout = stdout.trimRight();
+                stderr = stderr.trimRight();
 
                 callback(null, stdout, stderr);
             });
@@ -273,7 +269,7 @@ define(function(require, exports, module) {
          * Removes symbolic links from the `~/.c9/managed/plugins` folder.
          */
         function fsRmLinks(callback) {
-            debug("find", { args: [ managedPluginsPath, "-maxdepth", "1", "-type", "l", "-exec", "rm", "{}", ";" ] });
+            debug("find", { args: [ managedPluginsPath, "-maxdepth", "1", "-type", "l", "-exec", "rm", "{}", ";" ]});
 
             // find . -maxdepth 1 -type l -exec rm {} \;
 
@@ -338,7 +334,7 @@ define(function(require, exports, module) {
             //       - config is not escaped
             //
 
-            debug("sh", { args: [ "-c", "echo '" + config.join("\\n") + "' > " + managedRcPath ] });
+            debug("sh", { args: [ "-c", "echo '" + config.join("\\n") + "' > " + managedRcPath ]});
 
             proc.execFile("sh", {
                 args: [
@@ -414,7 +410,7 @@ define(function(require, exports, module) {
         });
 
         register(null, {
-            "plugin.updater.npm" : plugin
+            "plugin.updater.npm": plugin
         });
     }
 });

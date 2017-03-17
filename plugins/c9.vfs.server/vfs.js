@@ -19,12 +19,11 @@ function Vfs(vfs, master, options) {
     this.vfs = vfs;
     this.master = master;
     this.debug = options.debug || false;
-    this.logger = options.logger || {log: function(){}};
+    this.logger = options.logger || { log: function() {} };
     this.readonly = options.readonly || false;
     this.public = options.public || false;
     this.vfsOptions = options.vfsOptions || {};
     this.pid = this.vfsOptions.pid;
-    var extendToken = options.extendToken;
 
     this.homeDir = options.homeDir;
     this.workspaceDir = options.projectDir;
@@ -36,14 +35,12 @@ function Vfs(vfs, master, options) {
         blocked: this.readonly,
         extendDirectory: options.extendDirectory,
         extendOptions: options.extendOptions,
-        extendToken: extendToken
     });
     this.vfsWorkspace = wrapVfs(vfs, {
         root: this.workspaceDir,
         readonly: this.readonly,
         extendDirectory: options.extendDirectory,
         extendOptions: options.extendOptions,
-        extendToken: extendToken
     });
     
     var vfsProxy = proxyVfs(Object.keys(this.vfsHome), this.vfsHome, this.vfsWorkspace);
@@ -122,13 +119,13 @@ Vfs.prototype._watchConnection = function(pid) {
     var that = this;
     
     function onError(err) {
-        console.log("destroying because of error", err && err.stack || err)
+        console.log("destroying because of error", err && err.stack || err);
         that.destroy(err);
     }
     function onStderr(data) {
         // @todo collab stderr logs
         console.log("VFS stderr [" + pid + "]: " + data);
-        that.logger.log({message: data.toString(), pid: pid});
+        that.logger.log({ message: data.toString(), pid: pid });
     }
     
     master.on("disconnect", onError);
@@ -181,13 +178,13 @@ Vfs.prototype._createEngine = function(vfs, options) {
             var listenForEIOSocketEvents = function (eioSocket) {
                 if (!eioSocket || listeningForEIOSocketEvents) return;
                 eioSocket.once("close", function (reason, description) {
-                    var logMetadata = {message: "Socket closed", collab: options.collab, reason: reason, description: description, id: that.id, sid: socket.id, pid: that.pid};
+                    var logMetadata = { message: "Socket closed", collab: options.collab, reason: reason, description: description, id: that.id, sid: socket.id, pid: that.pid };
                     that.logger.log(logMetadata);
                     listeningForEIOSocketEvents = false;
                 });
                 eioSocket.on("upgrade", function (transport) {
                     var newTransportName = transport && transport.name ? transport.name : "unknown";
-                    var logMetadata = {message: "Socket transport changed", collab: options.collab, type: newTransportName,  id: that.id, sid: socket.id, pid: that.pid};
+                    var logMetadata = { message: "Socket transport changed", collab: options.collab, type: newTransportName, id: that.id, sid: socket.id, pid: that.pid };
                     that.logger.log(logMetadata);
                 });
                 listeningForEIOSocketEvents = true;
@@ -200,7 +197,7 @@ Vfs.prototype._createEngine = function(vfs, options) {
             });
         }
         socket.on('disconnect', function (err) {
-            var logMetadata = {message: "Socket disconnected", collab: options.collab, err: err, id: that.id, sid: socket.id, pid: that.pid};
+            var logMetadata = { message: "Socket disconnected", collab: options.collab, err: err, id: that.id, sid: socket.id, pid: that.pid };
             that.logger.log(logMetadata);
         });
         
@@ -221,7 +218,7 @@ Vfs.prototype._createEngine = function(vfs, options) {
         }
 
         worker.on("disconnect", function() {
-            var logMetadata = {message: "VFS socket disconnect", collab: options.collab, id: that.id, sid: socket.id, pid: that.pid};
+            var logMetadata = { message: "VFS socket disconnect", collab: options.collab, id: that.id, sid: socket.id, pid: that.pid };
             that.logger.log(logMetadata);
             if (options.collab) {
                 if (collabApi)

@@ -36,7 +36,7 @@
     height: auto;
     position: relative;
 }
-.searchTxt.tb_textboxInitial .sbtb_middle .input {
+.searchTxt.tb_textboxInitial .sbtb_middle .input, .tb_textboxInitialMsg {
     color: @textbox-initial-color !important;
     text-shadow: @textbox-initial-text-shadow;
     font-family: @find-textbox-font-family;
@@ -113,7 +113,9 @@
     color : #f1f1f1;
     .font-smoothing(true);
 }
-.searchbox.dark .btnclose{ visibility : hidden; }
+.searchbox.dark .btnclose{ 
+    background-image: url("@{image-path}/btnclose_flat_light.png");
+}
 .searchbox.dark .ace-tm .ace_cursor{
     color : #919191 !important;
 }

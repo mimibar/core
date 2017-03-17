@@ -1,12 +1,11 @@
 define(function(require, exports, module) {
-    main.consumes = ["Plugin", "http", "ui", "settings"];
+    main.consumes = ["Plugin", "ui", "settings"];
     main.provides = ["layout.preload"];
     return main;
 
     function main(options, imports, register) {
         var settings = imports.settings;
         var Plugin = imports.Plugin;
-        var http = imports.http;
         var ui = imports.ui;
         
         var async = require("async");
@@ -19,12 +18,12 @@ define(function(require, exports, module) {
         var packed = ui.packedThemes;
 
         var themes = {
-            "dark"       : "",
-            "dark-gray"  : "",
-            "light-gray" : "",
-            "light"      : "",
-            "flat-light" : "",
-            "flat-dark" : ""
+            "dark": "",
+            "dark-gray": "",
+            "light-gray": "",
+            "light": "",
+            "flat-light": "",
+            "flat-dark": ""
         };
 
         /***** Methods *****/
@@ -37,7 +36,7 @@ define(function(require, exports, module) {
             try {
                 var theme = settings.get("user/general/@skin");
                 return getTheme(theme, callback);
-            } catch(e) {}
+            } catch (e) {}
             async.forEach(Object.keys(themes), getTheme, callback);
         }
 

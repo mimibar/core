@@ -24,17 +24,17 @@ define(function(require, module, exports) {
         
         function show(onYes, onNo, title, header, msg, options) {
             if (!options)
-                options = {isHTML: true};
+                options = { isHTML: true };
                 
-            return plugin.queue(function(){
-                var all = options.all;
+            return plugin.queue(function() {
                 var cancel = options.cancel;
-                var showDontAsk = options.showDontAsk;
                 var metadata = options.metadata;
                 
                 title = title || "This is a Premium feature";
-                header = header || "Get Premium Support Now!";
-                msg = msg || 'Help is just a few clicks away. Check out our <a href="https://c9.io/pricing" target="_blank">amazing premium plans</a>.'
+                header = header || "Upgrade to Premium Now!";
+                onYes = onYes || function() {};
+                onNo = onNo || function() {};
+                msg = msg || 'A better, faster, more versatile Cloud9 is just a click away. Check out our <a href="https://c9.io/pricing" target="_blank">amazing premium plans</a>.';
                 
                 plugin.title = title;
                 plugin.heading = options && options.isHTML ? header : util.escapeXml(header);
@@ -46,21 +46,21 @@ define(function(require, module, exports) {
                 plugin.allowClose = cancel;
                 
                 var gotYesNo = false;
-                plugin.once("hide", function(){
+                plugin.once("hide", function() {
                     !gotYesNo && cancel && onNo(false, true, metadata);
                 });
                 
                 plugin.update([
-                    { id: "yes", onclick: function(){ 
+                    { id: "yes", onclick: function() { 
                         gotYesNo = true; 
                         plugin.hide(); 
                         onYes(false, metadata); 
-                    }},
-                    { id: "no", onclick: function(){ 
+                    } },
+                    { id: "no", onclick: function() { 
                         gotYesNo = true;
                         plugin.hide(); 
                         onNo(false, false, metadata); 
-                    }}
+                    } }
                 ]);
             }, options.queue === false);
         }
@@ -73,7 +73,12 @@ define(function(require, module, exports) {
         plugin.freezePublicAPI({
             
             /**
-             * 
+             * @param {Function} onYes          Callback for when user clicks the 'yes' button
+             * @param {Function} onNo           Callback for when the user clicks the 'no' button
+             * @param {String}   [title]        Title for the dialog
+             * @param {String}   [header]       Header for the dialog body
+             * @param {String}   [msg]          Message to show the user.
+             * @param {Object}   [options]      Miscellaneous options
              */
             show: show
         });

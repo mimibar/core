@@ -1,8 +1,3 @@
-/**
- * Utilities for the Ajax.org Cloud IDE
- *
- * @copyright 2013, Ajax.org B.V.
- */
 define(function(require, exports, module) {
     main.consumes = ["c9", "Plugin"];
     main.provides = ["util"];
@@ -30,85 +25,56 @@ define(function(require, exports, module) {
             return '"' + name + '"';
         };
         
-        var SupportedIcons = {
-            "c9search": "page_white_magnify",
-            "js": "page_white_code",
-            "jsx": "page_white_code_red",
-            "ts": "page_white_code",
-            "tsx": "page_white_code_red",
-            "json": "page_white_code",
-            "css": "css",
-            "scss": "css",
-            "sass": "css",
-            "less": "css",
-            "xml": "page_white_code_red",
-            "svg": "page_white_picture",
-            "php": "page_white_php",
-            "phtml": "page_white_php",
-            "html": "html",
-            "xhtml": "html",
-            "coffee": "page_white_cup",
-            "py": "page_white_code",
-            "go": "page_white_code",
-            "java": "page_white_cup",
-            "logic": "logiql",
-            "ru": "page_white_ruby",
-            "gemspec": "page_white_ruby",
-            "rake": "page_white_ruby",
-            "rb": "page_white_ruby",
-            "c": "page_white_c",
-            "cc": "page_white_c",
-            "cpp": "page_white_cplusplus",
-            "cxx": "page_white_c",
-            "h": "page_white_h",
-            "hh": "page_white_h",
-            "hpp": "page_white_h",
-            "bmp": "image",
-            "djv": "image",
-            "djvu": "image",
-            "gif": "image",
-            "ico": "image",
-            "jpeg": "image",
-            "jpg": "image",
-            "pbm": "image",
-            "pgm": "image",
-            "png": "image",
-            "pnm": "image",
-            "ppm": "image",
-            "psd": "image",
-            "svgz": "image",
-            "tif": "image",
-            "tiff": "image",
-            "xbm": "image",
-            "xpm": "image",
-            "pdf": "page_white_acrobat",
-            "clj": "page_white_code",
-            "ml": "page_white_code",
-            "mli": "page_white_code",
-            "cfm": "page_white_coldfusion",
-            "sql": "page_white_database",
-            "db": "page_white_database",
-            "sh": "page_white_wrench",
-            "bash": "page_white_wrench",
-            "xq": "page_white_code",
-            "xz": "page_white_zip",
-            "gz": "page_white_zip",
-            "bz": "page_white_zip",
-            "zip": "page_white_zip",
-            "tar": "page_white_zip",
-            "rar": "page_white_compressed",
-            "exe": "page_white_swoosh",
-            "o": "page_white_swoosh",
-            "lnk": "page_white_swoosh",
-            "txt": "page_white_text",
-            "settings": "page_white_gear",
-            "run": "page_white_gear",
-            "build": "page_white_gear",
-            "gitignore": "page_white_gear",
-            "profile": "page_white_gear",
-            "bashrc": "page_white_gear",
+        // on chrome this opens tab in a new process
+        plugin.openNewWindow = function(url) {
+            var a = document.createElement("a");
+            a.rel = "noreferrer";
+            a.target = "_blank";
+            a.href = url;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(function() {
+                a.remove();
+            });
         };
         
+        var SupportedIcons = (function() {
+            var extToClass = Object.create(null);
+            var classToExt = {
+                "page_white_magnify": "c9search",
+                "page_white_code": ["clj", "go", "js", "json", "ml", "mli", "py", "ts", "xq"],
+                "page_white_code_red": ["jsx", "tsx", "xml"],
+                "css": ["css", "less", "sass", "scss"],
+                "page_white_picture": "svg",
+                "page_white_php": ["php", "phtml"],
+                "html": ["html", "xhtml"],
+                "page_white_cup": ["coffee", "java"],
+                "logiql": "logic",
+                "page_white_ruby": ["gemspec", "rake", "rb", "ru"],
+                "page_white_c": ["c", "cc", "cxx"],
+                "page_white_cplusplus": "cpp",
+                "page_white_h": ["h", "hh", "hpp"],
+                "image": ["bmp", "djv", "djvu", "gif", "ico", "jpeg", "jpg", "pbm", "pgm", "png", "pnm", "ppm", "psd", "svgz", "tif", "tiff", "xbm", "xpm"],
+                "page_white_acrobat": "pdf",
+                "page_white_coldfusion": "cfm",
+                "page_white_database": ["db", "sql"],
+                "page_white_wrench": ["bash", "sh"],
+                "page_white_zip": ["bz", "gz", "tar", "xz", "zip"],
+                "page_white_compressed": "rar",
+                "page_white_swoosh": ["exe", "lnk", "o", "bin", "class"],
+                "page_white_text": "txt",
+                "page_white_gear": ["bashrc", "build", "gitignore", "profile", "run", "settings"]
+            };
+            Object.keys(classToExt).forEach(function(k) {
+                var exts = classToExt[k];
+                if (typeof exts == "string") 
+                    exts = [exts];
+                exts.forEach(function(ext) {
+                    extToClass[ext] = k;
+                });
+            });
+            return extToClass;
+        })();
         plugin.getFileIcon = function(name) {
             var icon = "page_white_text";
             var ext;
@@ -123,7 +89,7 @@ define(function(require, exports, module) {
         plugin.getFileIconCss = function(staticPrefix) {
             function iconCss(name, icon) {
                 return ".filetree-icon." + name + "{background-image:"
-                    +"url(\"" + staticPrefix + "/icons/" + (icon || name) + ".png\")}";
+                    + "url(\"" + staticPrefix + "/icons/" + (icon || name) + ".png\")}";
             }
             var css = "";
             var added = {};
@@ -149,7 +115,7 @@ define(function(require, exports, module) {
         
         plugin.escapeXml = window.apf
             ? apf.escapeXML
-            : function() { alert("oops! apf needed for this") };
+            : function() { alert("oops! apf needed for this"); };
         
         plugin.replaceStaticPrefix = function (string) {
             return string.replace(new RegExp("{c9.staticPrefix}", "g"), c9.staticUrl);
@@ -165,7 +131,7 @@ define(function(require, exports, module) {
          *
          * Some regexps adapted from http://userscripts.org/scripts/review/7122
          */
-        plugin.linkify = function(){var k="[a-z\\d.-]+://",h="(?:(?:[0-9]|[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5])\\.){3}(?:[0-9]|[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5])",c="(?:(?:[^\\s!@#$%^&*()_=+[\\]{}\\\\|;:'\",.<>/?]+)\\.)+",n="(?:ac|ad|aero|ae|af|ag|ai|al|am|an|ao|aq|arpa|ar|asia|as|at|au|aw|ax|az|ba|bb|bd|be|bf|bg|bh|biz|bi|bj|bm|bn|bo|br|bs|bt|bv|bw|by|bz|cat|ca|cc|cd|cf|cg|ch|ci|ck|cl|cm|cn|coop|com|co|cr|cu|cv|cx|cy|cz|de|dj|dk|dm|do|dz|ec|edu|ee|eg|er|es|et|eu|fi|fj|fk|fm|fo|fr|ga|gb|gd|ge|gf|gg|gh|gi|gl|gm|gn|gov|gp|gq|gr|gs|gt|gu|gw|gy|hk|hm|hn|hr|ht|hu|id|ie|il|im|info|int|in|io|iq|ir|is|it|je|jm|jobs|jo|jp|ke|kg|kh|ki|km|kn|kp|kr|kw|ky|kz|la|lb|lc|li|lk|lr|ls|lt|lu|lv|ly|ma|mc|md|me|mg|mh|mil|mk|ml|mm|mn|mobi|mo|mp|mq|mr|ms|mt|museum|mu|mv|mw|mx|my|mz|name|na|nc|net|ne|nf|ng|ni|nl|no|np|nr|nu|nz|om|org|pa|pe|pf|pg|ph|pk|pl|pm|pn|pro|pr|ps|pt|pw|py|qa|re|ro|rs|ru|rw|sa|sb|sc|sd|se|sg|sh|si|sj|sk|sl|sm|sn|so|sr|st|su|sv|sy|sz|tc|td|tel|tf|tg|th|tj|tk|tl|tm|tn|to|tp|travel|tr|tt|tv|tw|tz|ua|ug|uk|um|us|uy|uz|va|vc|ve|vg|vi|vn|vu|wf|ws|xn--0zwm56d|xn--11b5bs3a9aj6g|xn--80akhbyknj4f|xn--9t4b11yi5a|xn--deba0ad|xn--g6w251d|xn--hgbk6aj7f53bba|xn--hlcj6aya9esc7a|xn--jxalpdlp|xn--kgbechtv|xn--zckzah|ye|yt|yu|za|zm|zw)",f="(?:"+c+n+"|"+h+")",o="(?:[;/][^#?<>\\s]*)?",e="(?:\\?[^#<>\\s]*)?(?:#[^<>\\s]*)?",d="\\b"+k+"[^<>\\s]+",a="\\b"+f+o+e+"(?!\\w)",m="mailto:",j="(?:"+m+")?[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@"+f+e+"(?!\\w)",l=new RegExp("(?:"+d+"|"+a+"|"+j+")","ig"),g=new RegExp("^"+k,"i"),b={"'":"`",">":"<",")":"(","]":"[","}":"{","B;":"B+","b:":"b9"},i={callback:function(q,p){return p?'<a href="'+p+'" title="'+p+'">'+q+"</a>":q},punct_regexp:/(?:[!?.,:;'"]|(?:&|&amp;)(?:lt|gt|quot|apos|raquo|laquo|rsaquo|lsaquo);)$/};return function(u,z){z=z||{};var w,v,A,p,x="",t=[],s,E,C,y,q,D,B,r;for(v in i){if(z[v]===undefined){z[v]=i[v]}}while(w=l.exec(u)){A=w[0];E=l.lastIndex;C=E-A.length;if(/[\/:]/.test(u.charAt(C-1))){continue}do{y=A;r=A.substr(-1);B=b[r];if(B){q=A.match(new RegExp("\\"+B+"(?!$)","g"));D=A.match(new RegExp("\\"+r,"g"));if((q?q.length:0)<(D?D.length:0)){A=A.substr(0,A.length-1);E--}}if(z.punct_regexp){A=A.replace(z.punct_regexp,function(F){E-=F.length;return""})}}while(A.length&&A!==y);p=A;if(!g.test(p)){p=(p.indexOf("@")!==-1?(!p.indexOf(m)?"":m):!p.indexOf("irc.")?"irc://":!p.indexOf("ftp.")?"ftp://":"http://")+p}if(s!=C){t.push([u.slice(s,C)]);s=E}t.push([A,p])}t.push([u.substr(s)]);for(v=0;v<t.length;v++){x+=z.callback.apply(window,t[v])}return x||u}}();
+        plugin.linkify = function() {var k = "[a-z\\d.-]+://", h = "(?:(?:[0-9]|[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5])\\.){3}(?:[0-9]|[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5])", c = "(?:(?:[^\\s!@#$%^&*()_=+[\\]{}\\\\|;:'\",.<>/?]+)\\.)+", n = "(?:ac|ad|aero|ae|af|ag|ai|al|am|an|ao|aq|arpa|ar|asia|as|at|au|aw|ax|az|ba|bb|bd|be|bf|bg|bh|biz|bi|bj|bm|bn|bo|br|bs|bt|bv|bw|by|bz|cat|ca|cc|cd|cf|cg|ch|ci|ck|cl|cm|cn|coop|com|co|cr|cu|cv|cx|cy|cz|de|dj|dk|dm|do|dz|ec|edu|ee|eg|er|es|et|eu|fi|fj|fk|fm|fo|fr|ga|gb|gd|ge|gf|gg|gh|gi|gl|gm|gn|gov|gp|gq|gr|gs|gt|gu|gw|gy|hk|hm|hn|hr|ht|hu|id|ie|il|im|info|int|in|io|iq|ir|is|it|je|jm|jobs|jo|jp|ke|kg|kh|ki|km|kn|kp|kr|kw|ky|kz|la|lb|lc|li|lk|lr|ls|lt|lu|lv|ly|ma|mc|md|me|mg|mh|mil|mk|ml|mm|mn|mobi|mo|mp|mq|mr|ms|mt|museum|mu|mv|mw|mx|my|mz|name|na|nc|net|ne|nf|ng|ni|nl|no|np|nr|nu|nz|om|org|pa|pe|pf|pg|ph|pk|pl|pm|pn|pro|pr|ps|pt|pw|py|qa|re|ro|rs|ru|rw|sa|sb|sc|sd|se|sg|sh|si|sj|sk|sl|sm|sn|so|sr|st|su|sv|sy|sz|tc|td|tel|tf|tg|th|tj|tk|tl|tm|tn|to|tp|travel|tr|tt|tv|tw|tz|ua|ug|uk|um|us|uy|uz|va|vc|ve|vg|vi|vn|vu|wf|ws|xn--0zwm56d|xn--11b5bs3a9aj6g|xn--80akhbyknj4f|xn--9t4b11yi5a|xn--deba0ad|xn--g6w251d|xn--hgbk6aj7f53bba|xn--hlcj6aya9esc7a|xn--jxalpdlp|xn--kgbechtv|xn--zckzah|ye|yt|yu|za|zm|zw)", f = "(?:" + c + n + "|" + h + ")", o = "(?:[;/][^#?<>\\s]*)?", e = "(?:\\?[^#<>\\s]*)?(?:#[^<>\\s]*)?", d = "\\b" + k + "[^<>\\s]+", a = "\\b" + f + o + e + "(?!\\w)", m = "mailto:", j = "(?:" + m + ")?[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@" + f + e + "(?!\\w)", l = new RegExp("(?:" + d + "|" + a + "|" + j + ")", "ig"), g = new RegExp("^" + k, "i"), b = { "'": "`", ">": "<", ")": "(", "]": "[", "}": "{", "B;": "B+", "b:": "b9" }, i = { callback: function(q, p) {return p ? '<a href="' + p + '" title="' + p + '">' + q + "</a>" : q;}, punct_regexp: /(?:[!?.,:;'"]|(?:&|&amp;)(?:lt|gt|quot|apos|raquo|laquo|rsaquo|lsaquo);)$/ };return function(u, z) {z = z || {};var w, v, A, p, x = "", t = [], s, E, C, y, q, D, B, r;for (v in i) {if (z[v] === undefined) {z[v] = i[v];}} while (w = l.exec(u)) {A = w[0];E = l.lastIndex;C = E - A.length;if (/[\/:]/.test(u.charAt(C - 1))) {continue;} do {y = A;r = A.substr(-1);B = b[r];if (B) {q = A.match(new RegExp("\\" + B + "(?!$)", "g"));D = A.match(new RegExp("\\" + r, "g"));if ((q ? q.length : 0) < (D ? D.length : 0)) {A = A.substr(0, A.length - 1);E--;}} if (z.punct_regexp) {A = A.replace(z.punct_regexp, function(F) {E -= F.length;return "";});}} while (A.length && A !== y);p = A;if (!g.test(p)) {p = (p.indexOf("@") !== -1 ? (!p.indexOf(m) ? "" : m) : !p.indexOf("irc.") ? "irc://" : !p.indexOf("ftp.") ? "ftp://" : "http://") + p;} if (s != C) {t.push([u.slice(s, C)]);s = E;}t.push([A, p]);}t.push([u.substr(s)]);for (v = 0;v < t.length;v++) {x += z.callback.apply(window, t[v]);} return x || u;};}();
         
         plugin.stableStringify = function(obj, replacer, spaces) {
             var sortByKeys = function(obj) {
@@ -182,13 +148,13 @@ define(function(require, exports, module) {
             return JSON.stringify(sortByKeys(obj), replacer, spaces);
         };
         
-        plugin.safeParseJson = function(strJson, cb){
+        plugin.safeParseJson = function(strJson, cb) {
             // Remove comments
             var data = strJson.replace(/(^|\n)\s*\/\/.*/g, "");
                 
             try { return JSON.parse(data); }
             catch (e) { cb(e); return false; }
-        }
+        };
         
         /**
          * 
@@ -238,39 +204,47 @@ define(function(require, exports, module) {
             return "<" + tag + " " + plugin.toXmlAttributes(attrs) + (noclose ? ">" : " />");
         };
         
+        function isMd5String(str) {
+            return /^[0-9a-f]{32}$/.test(str);
+        }
+        
         /**
          * Returns the gravatar url for this user
          * @param {Number} size the size of the image
          */
         plugin.getGravatarUrl = function getGravatarUrl(email, size, defaultImage) {
-            var md5Email = apf.crypto.MD5.hex_md5((email || "").trim().toLowerCase());
+            var md5Email = email;
+            if (!isMd5String(md5Email)) {
+                md5Email = apf.crypto.MD5.hex_md5((email || "").trim().toLowerCase());
+            }
             return "https://secure.gravatar.com/avatar/" 
-                + md5Email + "?s=" + size + "&d="  + (defaultImage || "retro");
+                + md5Email + "?s=" + size + "&d=" + (defaultImage || "retro");
         };
         
         var reHome, reWorkspace, homeSub;
         plugin.$initPaths = function(home, workspaceDir) {
-            reHome = new RegExp("^" + plugin.escapeRegExp(home) + "(/|/?$)");
+            var pre = c9.platform == "win32" ? "/?" : "";
+            reHome = new RegExp("^" + pre + plugin.escapeRegExp(home) + "(/|/?$)");
             var wd = workspaceDir.replace(/\/?$/, "");
-            reWorkspace = new RegExp("^" + plugin.escapeRegExp(wd) + "(/|/?$)");
+            reWorkspace = new RegExp("^" + pre + plugin.escapeRegExp(wd) + "(/|/?$)");
             homeSub = "~/";
             if (home == workspaceDir) {
-                reHome = new RegExp("^(" + plugin.escapeRegExp(home) + "|~)(/|/?$)");
+                reHome = new RegExp("^(" + pre + plugin.escapeRegExp(home) + "|~)(/|/?$)");
                 homeSub = "/";
                 reWorkspace = null;
             } else if (reHome.test(workspaceDir)) {
-                reWorkspace = new RegExp("^" +
+                reWorkspace = new RegExp("^" + pre +
                     plugin.escapeRegExp(workspaceDir.replace(reHome, "~/")) + "(/|/?$)"
                 );
             } else if (reWorkspace.test(home)) {
-                reHome = new RegExp("^(" + plugin.escapeRegExp(home) + "|~)(/|/?$)");
+                reHome = new RegExp("^(" + pre + plugin.escapeRegExp(home) + "|~)(/|/?$)");
                 homeSub = home.replace(reWorkspace, "/").replace(/\/?$/, "/");
                 reWorkspace = null;
             }
         };
         plugin.$initPaths(c9.home || "/home/ubuntu", c9.workspaceDir || "/");
         
-        plugin.normalizePath = function(path){
+        plugin.normalizePath = function(path) {
             if (!path) return "";
             if (reHome) {
                 path = path.replace(reHome, homeSub);
@@ -375,7 +349,16 @@ define(function(require, exports, module) {
                 setTimeout(callback, 17);
             };
         
-        plugin.freezePublicAPI({});
+        plugin.freezePublicAPI({
+            /**
+             * @ignore
+             */
+            get supportedIcons() { return SupportedIcons; },
+            /**
+             * @ignore
+             */
+            set supportedIcons(value) { SupportedIcons = value; }
+        });
         
         register(null, {
             util: plugin

@@ -107,7 +107,7 @@ define(function(require, exports, module) {
                     else if (e.value === "gitadd")
                         lastLink.editor.onPaste("git add " + lastLink.value + "\n");
                     else if (e.value === "gitcheckout")
-                        lastLink.editor.onPaste("git checkout " + lastLink.value);
+                        lastLink.editor.onPaste("git checkout -- " + lastLink.value);
                     else if (e.value === "gitdiff")
                         lastLink.editor.onPaste("git diff " + lastLink.value + "\n");
                     else if (e.value === "gitrm")
@@ -119,7 +119,7 @@ define(function(require, exports, module) {
         }
         
         var menuLink;
-        function createLinkMenu(){
+        function createLinkMenu() {
             menuLink = new Menu({
                 items: [
                     new MenuItem({ value: "open", caption: "Open" }),
@@ -152,7 +152,7 @@ define(function(require, exports, module) {
             }
             else {
                 createMenu();
-                menuPath.once("show", function(){
+                menuPath.once("show", function() {
                     var isGit = e && e.command === "git";
                     var items = menuPath.items;
                     for (var i = 0; i < 6; i++) {
@@ -162,17 +162,17 @@ define(function(require, exports, module) {
                 });
                 
                 var ace = e.editor;
-                menuPath.once("hide", function(){
+                menuPath.once("hide", function() {
                     ace.selection.clearSelection();
                 });
                 
                 menu = menuPath;
             }
             
-            menu.show(e.x, e.y);
+            menu.show(e.x, e.y, "context");
         }
         
-        function openLink(href, inPreview){
+        function openLink(href, inPreview) {
             if (!/^(https?|ftp|file):/.test(href)) {
                 href = "http://" + href;
             }
@@ -184,7 +184,7 @@ define(function(require, exports, module) {
             if (inPreview)
                 commands.exec("preview", null, { path: href });
             else
-                window.open(href);
+                util.openNewWindow(href);
         }
         
         function open(e) {
@@ -205,8 +205,7 @@ define(function(require, exports, module) {
             }
             
             // Make sure home dir is marked correctly
-            path = path.replace(reHome, "~");
-            if (path[0] != "/") path = "/" + path;
+            path = util.normalizePath(path);
             
             fs.stat(path, function(err, stat) {
                 if (err) {
@@ -215,7 +214,7 @@ define(function(require, exports, module) {
                 if (stat.linkStat)
                     stat = stat.linkStat;
                 if (/directory/.test(stat.mime)) {
-                    return tabbehavior.revealtab({path: path});
+                    return tabbehavior.revealtab({ path: path });
                 }
                 tabManager.open({
                     path: path,
@@ -225,7 +224,7 @@ define(function(require, exports, module) {
                             jump: jump
                         }
                     }
-                }, function(){});
+                }, function() {});
             });
         }
         

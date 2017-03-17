@@ -20,8 +20,8 @@ define(function(require, module, exports) {
             
             var classList = {
                 names: [],
-                get length(){ return classList.names.length; },
-                contains: function(name){
+                get length() { return classList.names.length; },
+                contains: function(name) {
                     return classList.names.indexOf(name) > -1;
                 },
                 add: function(name) {
@@ -33,7 +33,7 @@ define(function(require, module, exports) {
                     
                     amlTab && amlTab.setAttribute("class", this.names.join(" "));
                 },
-                remove: function(){
+                remove: function() {
                     for (var i = 0, l = arguments.length; i < l; i++) {
                         var idx = this.names.indexOf(arguments[i]);
                         if (idx > -1)
@@ -67,7 +67,7 @@ define(function(require, module, exports) {
             var emit = plugin.getEmitter();
             
             var loaded;
-            function load(){
+            function load() {
                 if (loaded) return;
                 loaded = true;
 
@@ -76,7 +76,6 @@ define(function(require, module, exports) {
                     id: plugin.name, // path || 
                     type: "editor::" + editorType,
                     autofocus: false,
-                    tooltip: tooltip,
                     caption: title,
                     tab: plugin,
                     focussable: true,
@@ -90,12 +89,12 @@ define(function(require, module, exports) {
                 
                 // Hack to get activate event in
                 var activate = amlTab.$activate;
-                amlTab.$activate = function(){
+                amlTab.$activate = function() {
                     activate.apply(amlTab, arguments);
                     emit("activate");
                 };
                 var deactivate = amlTab.$deactivate;
-                amlTab.$deactivate = function(){
+                amlTab.$deactivate = function() {
                     deactivate.apply(amlTab, arguments);
                     emit("deactivate");
                 };
@@ -142,7 +141,7 @@ define(function(require, module, exports) {
                     active: isActive()
                 };
 
-                emit("getState", { state : state });
+                emit("getState", { state: state });
                 
                 return state;
             }
@@ -205,11 +204,11 @@ define(function(require, module, exports) {
                 }
             }
             
-            function isActive(){
+            function isActive() {
                 return amlPane ? amlPane.getPage() == amlTab : options.active;
             }
             
-            function activate(){
+            function activate() {
                 amlPane.set(amlTab);
             }
             
@@ -287,13 +286,13 @@ define(function(require, module, exports) {
             
             /***** Lifecycle *****/
             
-            plugin.on("load", function(){ 
+            plugin.on("load", function() { 
                 load();
             });
             
-            plugin.on("beforeUnload", function(){
+            plugin.on("beforeUnload", function(e) {
                 if (!plugin.meta.$closing) {
-                    if (close())
+                    if (close(e && e.animate === false))
                         return false;
                 }
             });
@@ -310,7 +309,7 @@ define(function(require, module, exports) {
 
                 loaded = false;
 
-                emit("close", {last: last, htmlEvent: e && e.htmlEvent});
+                emit("close", { last: last, htmlEvent: e && e.htmlEvent });
             });
             
             /***** Register and define API *****/
@@ -351,7 +350,7 @@ define(function(require, module, exports) {
                  * @private
                  * @readonly
                  */
-                get aml(){ return amlTab; },
+                get aml() { return amlTab; },
 
                 /**
                  * The pane that this tab belongs to. This property changes when
@@ -359,32 +358,32 @@ define(function(require, module, exports) {
                  * @property {Pane} pane
                  * @readonly
                  */
-                get pane(){ return amlPane.cloud9pane; },
+                get pane() { return amlPane.cloud9pane; },
                 /** 
                  * The document loaded in this tab. This property is always the
                  * same object.
                  * @property {Document} document
                  * @readonly
                  */
-                get document(){ return doc; },
+                get document() { return doc; },
                 /**
                  * Retrieves the meta object for this panel
                  * @property {Object} meta
                  */
-                get meta(){ return meta; },
+                get meta() { return meta; },
                 /** 
                  * The path to the file loaded into this tab. This property will
                  * be undefined when no path is set (for instance when no file
                  * was loaded to create this tab).
                  * @property {String} path
                  */
-                get path(){ return path || undefined; },
+                get path() { return path || undefined; },
                 set path(v) { 
                     var oldpath = path;
                     path = v;
-                    emit("setPath", {path: path, oldpath: oldpath});
+                    emit("setPath", { path: path, oldpath: oldpath });
                 },
-                get relatedPath(){ return (this.editor || 1).relatedPath; },
+                get relatedPath() { return (this.editor || 1).relatedPath; },
                 /** 
                  * The type of the editor shown in this tab. 
                  * 
@@ -392,7 +391,7 @@ define(function(require, module, exports) {
                  * 
                  * @property {String} editorType
                  */
-                get editorType(){ 
+                get editorType() { 
                     return editorType;
                 },
                 set editorType(type) { 
@@ -403,7 +402,7 @@ define(function(require, module, exports) {
                  * The title (or caption) of the tab button
                  * @property {String} title
                  */
-                get title(){ 
+                get title() { 
                     return title; 
                 },
                 set title(value) { 
@@ -415,12 +414,11 @@ define(function(require, module, exports) {
                  * mouse over the tab button.
                  * @property {String} tooltip
                  **/
-                get tooltip(){ 
+                get tooltip() { 
                     return tooltip; 
                 },
                 set tooltip(value) { 
                     tooltip = value;
-                    amlTab && amlTab.setProperty("tooltip", value);
                 },
                 /**
                  * The background color of the tab button and it's body. It is
@@ -429,7 +427,7 @@ define(function(require, module, exports) {
                  * backgroundColor is used.
                  * @property {String} backgroundColor
                  */
-                get backgroundColor(){ return bg },
+                get backgroundColor() { return bg; },
                 set backgroundColor(v) {
                     bg = v || "";
                     if (!rule) 
@@ -444,7 +442,7 @@ define(function(require, module, exports) {
                  * backgroundColor is used.
                  * @property {String} backgroundColor
                  */
-                get foregroundColor(){ return bg },
+                get foregroundColor() { return bg; },
                 set foregroundColor(v) {
                     fg = v;
                     if (!rule) 
@@ -461,7 +459,7 @@ define(function(require, module, exports) {
                  * @property {String}   classList.remove.name   The name of the class to remove.
                  * @readonly
                  */
-                get classList(){ 
+                get classList() { 
                     return classList;
                 },
                 /**
@@ -469,7 +467,7 @@ define(function(require, module, exports) {
                  * @property {Boolean} active
                  * @readonly
                  */
-                get active(){ 
+                get active() { 
                     return amlPane.getPage() == amlTab;
                 },
                 /**
@@ -483,7 +481,7 @@ define(function(require, module, exports) {
                  * @property {Editor} editor
                  * @readonly
                  */
-                get editor(){
+                get editor() {
                     if (amlPane.$amlDestroyed) 
                        return false;
                     

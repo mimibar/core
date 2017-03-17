@@ -9,14 +9,13 @@ define(function(require, exports, module) {
     "use strict";
 
     main.consumes = [
-        "Plugin", "http"
+        "Plugin",
     ];
     main.provides = ["error_handler"];
     return main;
 
     function main(options, imports, register) {
         var Plugin = imports.Plugin;
-        var http = imports.http;
 
         /***** Initialization *****/
         
@@ -97,11 +96,11 @@ define(function(require, exports, module) {
         
         /***** Lifecycle *****/
         
-        plugin.on("load", function(){
+        plugin.on("load", function() {
             load();
         });
         
-        plugin.on("unload", function(){
+        plugin.on("unload", function() {
             loaded = false;
         });
         
@@ -113,6 +112,6 @@ define(function(require, exports, module) {
             log: reportError
         });
         
-        register(null, { "error_handler" : plugin });
+        register(null, { "error_handler": plugin });
     }
 });

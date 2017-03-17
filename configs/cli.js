@@ -1,3 +1,4 @@
+require("amd-loader");
 module.exports = function(options) {
     
 // workaround for api difference between node and c9 events modules
@@ -78,6 +79,10 @@ return [
     // "./c9.cli.mount/mount",
     {
         packagePath: "./c9.cli.open/open",
+        platform: process.platform
+    },
+    {
+        packagePath: "./c9.cli.exec/exec",
         platform: process.platform
     },
     {

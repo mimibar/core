@@ -76,6 +76,8 @@ function main(options, imports, register) {
             var parts = e.split(" ");
             var id = parts[1];
             var etag = parts[0];
+            if (!id || /^https?:\/\//.test(id))
+                return q.oneDone();
             var path = resolveModulePath(id, req.pathConfig.pathMap);
             
             if (path == id && !/^(\/|\w:)/.test(path)) {
@@ -88,7 +90,7 @@ function main(options, imports, register) {
             fs.stat(path, function(err, s) {
                 if (!err) {
                     var mt = s.mtime.valueOf();
-                    var etagNew = '"' + s.size +"-" +  mt + '"';
+                    var etagNew = '"' + s.size + "-" + mt + '"';
                     if (etag !== etagNew) {
                         err = true;
                     }
@@ -238,7 +240,7 @@ function main(options, imports, register) {
                         
                         console.log("File cached at", filename);
                         // set utime to have consistent etag
-                        fs.utimes(filename, mtime/1000, mtime/1000, function(e) {
+                        fs.utimes(filename, mtime / 1000, mtime / 1000, function(e) {
                             if (e) console.error(e);
                         });
                     });

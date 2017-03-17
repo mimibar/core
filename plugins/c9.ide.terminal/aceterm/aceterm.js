@@ -80,7 +80,7 @@ define(function(require, exports, module) {
         
         // permanently hide hor scrollbar
         ace.renderer.scrollBarH.setVisible(false);
-        ace.renderer.scrollBarH.setVisible=function(){};
+        ace.renderer.scrollBarH.setVisible = function() {};
         
         ace.renderer.setOption("vScrollBarAlwaysVisible", true);
         ace.renderer.scrollBarV.element.style.overflowY = "auto";
@@ -155,6 +155,11 @@ define(function(require, exports, module) {
             str += this.getLine(end, newLineChar).substring(0, range.end.column);
             return str;
         };
+        
+        session.doc.getValue = function() {
+            return this.getTextRange(new Range(0, 0, this.getLength(), Number.MAX_VALUE));
+        };
+        
         session.$computeWidth =
         session.getScreenWidth = function () {
             return this.term.cols;
@@ -172,7 +177,7 @@ define(function(require, exports, module) {
         var range = session.selection.getRange();
         range.cursor = range.start = range.end;
         
-        var dummyDelta = {action:"insertText", start: range.clone().start, end: range.clone().end, lines:[""]};
+        var dummyDelta = { action: "insertText", start: range.clone().start, end: range.clone().end, lines: [""]};
 
         session.on("changeEditor", function(e, session) {
             if (e.oldEditor) {
@@ -242,7 +247,7 @@ define(function(require, exports, module) {
                 return;
             return ace.renderer.$loop.pending;
         };
-        session.bgTokenizer.$worker=function(){};
+        session.bgTokenizer.$worker = function() {};
         session.term.on("input", function() {
             if (session.maxScrollTop) {
                 session.maxScrollTop = 0;
@@ -272,7 +277,9 @@ define(function(require, exports, module) {
                 var command = monitor.getCommand(row);
                 if (command) {
                     // wait for \n to know what command was typed
-                    term.on("afterWrite", waitForNewLine);
+                    term.once("newline", function() {
+                        monitor.$command = monitor.getCommand(monitor.lastCommandRow).trim();
+                    });
                     term.lines[row].isUserInput = true;
                     monitor.lastCommandRow = row;
                     monitor.$command = monitor.getCommand(monitor.lastCommandRow).trim();
@@ -293,12 +300,6 @@ define(function(require, exports, module) {
                 });
             }
         });
-        function waitForNewLine(data) {
-             if (data.indexOf("\n") >= 0) {
-                session.term.off("afterWrite", waitForNewLine);
-                monitor.$command = monitor.getCommand(monitor.lastCommandRow).trim();
-             }
-        }
 
         var monitor = {
             lastCommandRow: -1,

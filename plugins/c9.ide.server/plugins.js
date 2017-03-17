@@ -26,7 +26,7 @@ define(function(require, exports, module) {
         var plugin = new Plugin("Ajax.org", main.consumes);
         
         var loaded = false;
-        function load(){
+        function load() {
             if (loaded) return false;
             loaded = true;
             
@@ -41,6 +41,7 @@ define(function(require, exports, module) {
                 ui: "lib/ui",
                 c9: "lib/c9",
                 frontdoor: "lib/frontdoor",
+                outplan: "lib/outplan/dist/outplan",
             };
             
             if (whitelist === "*") {
@@ -70,6 +71,7 @@ define(function(require, exports, module) {
                     "ui",
                     "emmet",
                     "frontdoor",
+                    "outplan",
                     "mocha", // TESTING
                     "chai",  // TESTING
                 ].forEach(function(name) {
@@ -86,11 +88,27 @@ define(function(require, exports, module) {
                 }]);
 
                 statics.addStatics(externalPlugins.map(function(plugin) {
+                    if (typeof plugin == "string")
+                        plugin = { path: plugin, mount: plugin };
                     return {
-                        path: __dirname + "/../../node_modules/" + plugin,
-                        mount: "/plugins/" + plugin
+                        path: __dirname + "/../../node_modules/" + plugin.path,
+                        mount: "/plugins/" + plugin.mount
                     };
                 }));
+                
+                try {
+                    statics.addStatics(
+                        fs.readdirSync(__dirname + "/../../user-plugins/").map(function(plugin) {
+                            if (/^scripts$|\.(json|sh)$/.test(plugin)) 
+                                return;
+                            return {
+                                path: __dirname + "/../../user-plugins/" + plugin,
+                                mount: "/plugins/" + plugin
+                            };
+                        }).filter(Boolean)
+                    );
+                } catch (e) {
+                }
                 
                 statics.addStatics(fs.readdirSync(__dirname + "/../")
                     .filter(function(path) {
@@ -115,6 +133,11 @@ define(function(require, exports, module) {
             }
             
             statics.addStatics([{
+                path: __dirname + "/../../configs/ide",
+                mount: "/configs/ide"
+            }]);
+            
+            statics.addStatics([{
                 path: __dirname + "/www",
                 mount: "/"
             }]);
@@ -128,10 +151,10 @@ define(function(require, exports, module) {
         
         /***** Lifecycle *****/
         
-        plugin.on("load", function(){
+        plugin.on("load", function() {
             load();
         });
-        plugin.on("unload", function(){
+        plugin.on("unload", function() {
             loaded = false;
         });
         

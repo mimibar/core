@@ -225,6 +225,10 @@ define(function(require, exports, module) {
                             callback(fatalError(res.error.message, "dashboard"));
                             return;
                         }
+                        else if (err.code == 404) {
+                            callback(fatalError("This workspace no longer appears to exist or failed to be created.", "dashboard"));
+                            return;
+                        }
                         else if (err.code === 428 && res.error) {
                             emit("restore", {
                                 projectState: res.error.projectState,
@@ -251,6 +255,13 @@ define(function(require, exports, module) {
                             }, 10000);
                             return;
                         }
+                        else if (err.code == 503) {
+                            // service unavailable
+                            setTimeout(function() {
+                                tryNext(i);
+                            }, res.error.retryIn || 15000);
+                            return;
+                        }
                         else if (err.code === 500 && res && res.error && res.error.cause) {
                             return callback(res.error.cause.message);
                         }
@@ -273,7 +284,7 @@ define(function(require, exports, module) {
             
             function startParallelSearches (totalRunners) {
                 var attemptedServers = {}; 
-                for (var s = 0; s < servers.length && s < totalRunners; s++)  {
+                for (var s = 0; s < servers.length && s < totalRunners; s++) {
                     latestServer = s; 
                     var server = servers[s];
                     var serverHostUrl = getHostFromServerUrl(server.url);
@@ -324,17 +335,9 @@ define(function(require, exports, module) {
             });
             return servers.sort(function(a, b) {
                 if (a.region == b.region) {
-                    if (a.packageVersion == b.packageVersion) {
-                        if (a.load < b.load) {
-                            return -1;
-                        } 
-                        else {
-                            return 1;
-                        }
-                    }
-                    else if (a.packageVersion > b.packageVersion) {
+                    if (a.load < b.load) {
                         return -1;
-                    }
+                    } 
                     else {
                         return 1;
                     }
@@ -422,7 +425,7 @@ define(function(require, exports, module) {
         function saveToSessionStorage() {
             try {
                 window.sessionStorage.setItem("vfsid", lastVfs);
-            } catch(e) {
+            } catch (e) {
                 // could throw a quota exception
             }
         }

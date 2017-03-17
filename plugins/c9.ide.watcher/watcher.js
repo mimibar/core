@@ -28,7 +28,7 @@ define(function(require, exports, module) {
         var loaded = false;
         var cached;
         
-        function load(){
+        function load() {
             if (loaded) return false;
             loaded = true;
             
@@ -40,16 +40,35 @@ define(function(require, exports, module) {
             function doneHandler(e) {
                 if (!options || !options.testing) {
                     clearTimeout(ignored[e.path]);
-                    ignored[e.path] = setTimeout(function(){
+                    ignored[e.path] = setTimeout(function() {
                         unignore(e.path);
                     }, IGNORE_TIMEOUT);
                 }
             }
             
+            function unwatchChildren(e) {
+                e.watchers = [];
+                Object.keys(handlers).forEach(function(path) {
+                    if (path == e.path || path.startsWith(e.path + "/")) {
+                        if (unwatch(path))
+                            e.watchers.push(path.slice(e.path.length));
+                    }
+                });
+                ignoreHandler(e);
+            }
+            
+            function rewatchChildren(e) {
+                doneHandler(e);
+                var toPath = e.result[0] ? e.path : e.args[1];
+                e.watchers.forEach(function(path) {
+                    watch(toPath + path);
+                });
+            }
+            
             fs.on("beforeWriteFile", ignoreHandler, plugin);
             fs.on("afterWriteFile", doneHandler, plugin);
-            fs.on("beforeRename", ignoreHandler, plugin);
-            fs.on("afterRename", doneHandler, plugin);
+            fs.on("beforeRename", unwatchChildren, plugin);
+            fs.on("afterRename", rewatchChildren, plugin);
             fs.on("beforeMkdir", ignoreHandler, plugin);
             fs.on("afterMkdir", doneHandler, plugin);
             fs.on("beforeMkdirP", ignoreHandler, plugin);
@@ -61,13 +80,13 @@ define(function(require, exports, module) {
             fs.on("beforeRmdir", ignoreHandler, plugin);
             fs.on("afterRmdir", doneHandler, plugin);
             
-            c9.on("disconnect", function(){
+            c9.on("disconnect", function() {
                 if (!cached)
                     cached = Object.keys(handlers);
                 handlers = {};
             });
             
-            c9.on("connect", function(){
+            c9.on("connect", function() {
                 if (cached) {
                     handlers = {};
                     cached.forEach(function(path) {
@@ -89,7 +108,7 @@ define(function(require, exports, module) {
                 fs.unwatch(path, handlers[path]);
             delete handlers[path];
             
-            emit("failed", { path : path });
+            emit("failed", { path: path });
             
             return false;
         }
@@ -101,7 +120,7 @@ define(function(require, exports, module) {
             if (ignored[path])
                 clearTimeout(ignored[path]);
                 
-            ignored[path] = setTimeout(function(){
+            ignored[path] = setTimeout(function() {
                 unignore(path);
             }, timeout);
     
@@ -149,7 +168,7 @@ define(function(require, exports, module) {
                     if (err.code == "ENOENT" && handlers[path] && handlers[path].retries < 1) {
                         handlers[path].retries++;
                         handlers[path].timeout = 
-                            setTimeout(function(){ 
+                            setTimeout(function() { 
                                 watch(path, $refresh, true); 
                             }, 1000);
                         return false;
@@ -195,7 +214,7 @@ define(function(require, exports, module) {
                         fs.unwatch(path, handler);
                         delete handlers[path];
                         // console.log("[watchers] received", event, "event for", path, stat);
-                        emit("delete" + eventSuffix, { path : path });
+                        emit("delete" + eventSuffix, { path: path });
                     }
                     else if (event == "directory") {
                         emit("directory" + eventSuffix, {
@@ -237,7 +256,7 @@ define(function(require, exports, module) {
                         return;
                     if (err.code == "ENOENT" || err.code == "EBADF") {
                         console.log("[watcher] sending artificial check event for", path, "(deleted)", stat);
-                        emit("delete", { path : path });
+                        emit("delete", { path: path });
                     }
                     else {
                         // console.error("[watchers] watcher.check received unknown error ", err);
@@ -258,16 +277,16 @@ define(function(require, exports, module) {
         
         /***** Lifecycle *****/
         
-        plugin.on("load", function(){
+        plugin.on("load", function() {
             load();
         });
-        plugin.on("enable", function(){
+        plugin.on("enable", function() {
             
         });
-        plugin.on("disable", function(){
+        plugin.on("disable", function() {
             
         });
-        plugin.on("unload", function(){
+        plugin.on("unload", function() {
             loaded = false;
         });
         
